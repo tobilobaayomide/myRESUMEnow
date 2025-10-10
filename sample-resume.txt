@@ -1,0 +1,35 @@
+John Smith
+Software Engineer
+
+john.smith@email.com
+(555) 123-4567
+123 Tech Street, San Francisco, CA 94105
+LinkedIn: https://linkedin.com/in/johnsmith
+Portfolio: https://github.com/johnsmith
+
+SUMMARY
+Experienced software engineer with 5+ years developing scalable web applications. Passionate about clean code and modern technologies.
+
+SKILLS
+JavaScript, React, Node.js, Python, TypeScript, HTML, CSS, MongoDB, PostgreSQL, AWS, Docker, Git
+
+EXPERIENCE
+Senior Software Developer
+TechCorp Inc. | January 2022 - Present
+• Lead development of customer-facing web applications
+• Implemented microservices architecture improving performance by 40%
+• Mentored junior developers and conducted code reviews
+
+Software Developer
+StartupXYZ | June 2019 - December 2021
+• Built responsive web applications using React and Node.js
+• Collaborated with cross-functional teams to deliver features
+• Optimized database queries reducing load times by 30%
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of California, Berkeley | 2015 - 2019
+
+CERTIFICATIONS
+AWS Certified Developer Associate | 2023
+Google Cloud Professional Developer | 2022
