@@ -112,43 +112,47 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
       // Save the PDF with mobile-friendly approach
       const filename = `${resumeData.fullName?.replace(/\s+/g, '_') || 'Resume'}_Resume.pdf`;
       
-      // Detect if mobile device
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      // Detect if iOS device
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent);
       
-      if (isMobile) {
-        // For mobile: create blob and open in new window with proper download attributes
+      if (isIOS) {
+        // iOS Safari requires data URI instead of blob URLs
+        const pdfDataUri = pdf.output('dataurlstring');
+        
+        // Create a temporary link with data URI
+        const link = document.createElement('a');
+        link.href = pdfDataUri;
+        link.download = filename;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up after a short delay
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 100);
+        
+        // Show helpful message for iOS users
+        setTimeout(() => {
+          alert('PDF is ready! Check your Downloads or tap "Open in..." to save to Files app.');
+        }, 300);
+      } else if (isAndroid) {
+        // Android: use blob with download attribute
         const pdfBlob = pdf.output('blob');
         const blobUrl = URL.createObjectURL(pdfBlob);
         
-        // Create a temporary link element
         const link = document.createElement('a');
         link.href = blobUrl;
         link.download = filename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
         
-        // For iOS Safari, we need to open in new window and let user tap download
-        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-          // iOS Safari - open in new window
-          const newWindow = window.open(blobUrl, '_blank');
-          if (!newWindow) {
-            // If popup blocked, fallback to direct download attempt
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }
-          // Alert user to tap the download button in Safari
-          setTimeout(() => {
-            alert('Tap the download icon in the toolbar to save the PDF to your device.');
-          }, 500);
-        } else {
-          // Android and other mobile browsers
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         
-        // Clean up blob URL after a delay
+        // Clean up blob URL after download
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       } else {
         // Desktop: use normal save method
