@@ -117,27 +117,37 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
       const isAndroid = /Android/i.test(navigator.userAgent);
       
       if (isIOS) {
-        // iOS Safari requires data URI instead of blob URLs
-        const pdfDataUri = pdf.output('dataurlstring');
+        // iOS: Use Web Share API (most reliable for iOS Safari)
+        const pdfBlob = pdf.output('blob');
         
-        // Create a temporary link with data URI
-        const link = document.createElement('a');
-        link.href = pdfDataUri;
-        link.download = filename;
-        link.style.display = 'none';
-        
-        document.body.appendChild(link);
-        link.click();
-        
-        // Clean up after a short delay
-        setTimeout(() => {
-          document.body.removeChild(link);
-        }, 100);
-        
-        // Show helpful message for iOS users
-        setTimeout(() => {
-          alert('PDF is ready! Check your Downloads or tap "Open in..." to save to Files app.');
-        }, 300);
+        // Check if Web Share API is available
+        if (navigator.share && navigator.canShare) {
+          const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+          
+          // Check if can share files
+          if (navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: filename,
+                text: 'Your resume PDF'
+              });
+              console.log('PDF shared successfully via Web Share API');
+            } catch (error) {
+              if (error.name !== 'AbortError') {
+                console.error('Share failed:', error);
+                // Fallback to download link
+                fallbackDownload(pdfBlob, filename);
+              }
+            }
+          } else {
+            // Can't share files, fallback to download
+            fallbackDownload(pdfBlob, filename);
+          }
+        } else {
+          // No Web Share API, fallback to download
+          fallbackDownload(pdfBlob, filename);
+        }
       } else if (isAndroid) {
         // Android: use blob with download attribute
         const pdfBlob = pdf.output('blob');
@@ -157,6 +167,26 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
       } else {
         // Desktop: use normal save method
         pdf.save(filename);
+      }
+      
+      // Fallback function for iOS when Web Share API is not available
+      function fallbackDownload(blob, filename) {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 100);
+        
+        // Show instruction for iOS users
+        alert('PDF generated! If download didn\'t start, tap and hold the PDF to save it.');
       }
       
       console.log('PDF generated successfully!');
