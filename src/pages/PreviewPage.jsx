@@ -109,8 +109,51 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
         console.log(`Page ${i + 1} complete with ${linkData.length} links`);
       }
       
-      // Save the PDF
-      pdf.save(`${resumeData.fullName?.replace(/\s+/g, '_') || 'Resume'}_Resume.pdf`);
+      // Save the PDF with mobile-friendly approach
+      const filename = `${resumeData.fullName?.replace(/\s+/g, '_') || 'Resume'}_Resume.pdf`;
+      
+      // Detect if mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // For mobile: create blob and open in new window with proper download attributes
+        const pdfBlob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        // For iOS Safari, we need to open in new window and let user tap download
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+          // iOS Safari - open in new window
+          const newWindow = window.open(blobUrl, '_blank');
+          if (!newWindow) {
+            // If popup blocked, fallback to direct download attempt
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+          // Alert user to tap the download button in Safari
+          setTimeout(() => {
+            alert('Tap the download icon in the toolbar to save the PDF to your device.');
+          }, 500);
+        } else {
+          // Android and other mobile browsers
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+        
+        // Clean up blob URL after a delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } else {
+        // Desktop: use normal save method
+        pdf.save(filename);
+      }
       
       console.log('PDF generated successfully!');
     } catch (error) {
