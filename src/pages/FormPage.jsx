@@ -66,14 +66,44 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
     return indices.sort((a, b) => a - b);
   };
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
     defaultValues: existingData || {}
   });
   
+  // Helper function to check if currently working based on existing data
+  const getInitialCurrentlyWorking = (data) => {
+    if (!data) return {};
+    const working = {};
+    let index = 0;
+    while (data[`jobTitle_${index}`]) {
+      if (data[`endMonth_${index}`] === 'Present' || data[`endYear_${index}`] === 'Present') {
+        working[index] = true;
+      }
+      index++;
+    }
+    return working;
+  };
+
+  // Helper function to check if currently studying based on existing data
+  const getInitialCurrentlyStudying = (data) => {
+    if (!data) return {};
+    const studying = {};
+    let index = 0;
+    while (data[`degree_${index}`]) {
+      if (data[`educationEndMonth_${index}`] === 'Present' || data[`educationEndYear_${index}`] === 'Present') {
+        studying[index] = true;
+      }
+      index++;
+    }
+    return studying;
+  };
+
   const [workExperiences, setWorkExperiences] = useState(getWorkExperienceIndices(existingData));
   const [educations, setEducations] = useState(getEducationIndices(existingData));
   const [certifications, setCertifications] = useState(getCertificationIndices(existingData));
   const [additionalSections, setAdditionalSections] = useState(getAdditionalSectionIndices(existingData));
+  const [currentlyWorking, setCurrentlyWorking] = useState(getInitialCurrentlyWorking(existingData));
+  const [currentlyStudying, setCurrentlyStudying] = useState(getInitialCurrentlyStudying(existingData));
 
   // Reset form when existingData changes
   useEffect(() => {
@@ -85,6 +115,8 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
       setEducations(getEducationIndices(existingData));
       setCertifications(getCertificationIndices(existingData));
       setAdditionalSections(getAdditionalSectionIndices(existingData));
+      setCurrentlyWorking(getInitialCurrentlyWorking(existingData));
+      setCurrentlyStudying(getInitialCurrentlyStudying(existingData));
     }
   }, [existingData, reset]);
 
@@ -164,6 +196,8 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
           'Professional Associations': 'associations'
         };
         typeSelect.value = typeMap[templateType] || 'custom';
+        // Use setValue to register with react-hook-form
+        setValue(`additionalSectionType_${newIndex}`, typeMap[templateType] || 'custom');
         // Trigger change event to auto-populate title
         typeSelect.dispatchEvent(new Event('change', { bubbles: true }));
       }
@@ -206,6 +240,8 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
         const titleInput = form.querySelector(`input[name="additionalSectionTitle_${sectionIndex}"]`);
         if (titleInput) {
           titleInput.value = sectionTitles[sectionType] || '';
+          // Use setValue to register with react-hook-form
+          setValue(`additionalSectionTitle_${sectionIndex}`, sectionTitles[sectionType] || '');
           // Trigger the react-hook-form update
           titleInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
@@ -306,18 +342,39 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
       case 'volunteer':
         return (
           <div className="section-specific-fields">
-            <div className="form-group">
-              <label>Volunteer Experience</label>
-              <textarea
-                {...register(`additionalSectionContent_${sectionIndex}`, { required: 'Volunteer experience is required' })}
-                placeholder="Community Food Bank Volunteer (2022-Present): Organized food distribution events&#10;Habitat for Humanity (2021): Participated in home building projects&#10;Local Animal Shelter (2020-2021): Cared for rescued animals"
-                rows="4"
-              />
-              {errors[`additionalSectionContent_${sectionIndex}`] && (
-                <span className="error">{errors[`additionalSectionContent_${sectionIndex}`].message}</span>
-              )}
-              <small className="form-hint">Include organization, duration, and key activities</small>
+            <div className="volunteer-container">
+              <h4>Volunteer Experience</h4>
+              <div className="volunteer-item">
+                <div className="form-group">
+                  <label>Organization Name</label>
+                  <input
+                    type="text"
+                    {...register(`volunteerOrg_${sectionIndex}`, { required: 'Organization name is required' })}
+                    placeholder="Community Food Bank"
+                  />
+                  {errors[`volunteerOrg_${sectionIndex}`] && (
+                    <span className="error">{errors[`volunteerOrg_${sectionIndex}`].message}</span>
+                  )}
+                </div>
+                
+                <div className="form-group">
+                  <label>Year (Optional)</label>
+                  <select
+                    {...register(`volunteerYear_${sectionIndex}`)}
+                    className="date-select"
+                  >
+                    <option value="">Select Year (Optional)</option>
+                    {certificationYears.map(year => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                  <small className="form-hint">Select a year or leave blank</small>
+                </div>
+              </div>
             </div>
+            <small className="form-hint">Add multiple volunteer experiences by creating multiple volunteer sections</small>
           </div>
         );
       
@@ -357,7 +414,79 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
   };
 
   const onSubmit = (data) => {
-    onFormSubmit(data);
+    console.log('Form onSubmit - raw data:', data);
+    
+    // Clean the data to only include current indices
+    const cleanedData = {};
+    
+    // Copy basic fields
+    Object.keys(data).forEach(key => {
+      // Skip indexed fields, we'll add them back selectively
+      if (!key.match(/_([\d]+)$/)) {
+        cleanedData[key] = data[key];
+      }
+    });
+    
+    // Add only current work experiences
+    workExperiences.forEach((expIndex, arrayIndex) => {
+      const prefix = `jobTitle_${expIndex}`;
+      if (data[`jobTitle_${expIndex}`]) {
+        // Re-index to sequential numbers
+        cleanedData[`jobTitle_${arrayIndex}`] = data[`jobTitle_${expIndex}`];
+        cleanedData[`company_${arrayIndex}`] = data[`company_${expIndex}`];
+        cleanedData[`startMonth_${arrayIndex}`] = data[`startMonth_${expIndex}`];
+        cleanedData[`startYear_${arrayIndex}`] = data[`startYear_${expIndex}`];
+        cleanedData[`endMonth_${arrayIndex}`] = data[`endMonth_${expIndex}`];
+        cleanedData[`endYear_${arrayIndex}`] = data[`endYear_${expIndex}`];
+        cleanedData[`jobDescription_${arrayIndex}`] = data[`jobDescription_${expIndex}`];
+      }
+    });
+    
+    // Add only current educations
+    educations.forEach((eduIndex, arrayIndex) => {
+      if (data[`degree_${eduIndex}`]) {
+        cleanedData[`degree_${arrayIndex}`] = data[`degree_${eduIndex}`];
+        cleanedData[`course_${arrayIndex}`] = data[`course_${eduIndex}`];
+        cleanedData[`institution_${arrayIndex}`] = data[`institution_${eduIndex}`];
+        cleanedData[`educationLocation_${arrayIndex}`] = data[`educationLocation_${eduIndex}`];
+        cleanedData[`educationStartMonth_${arrayIndex}`] = data[`educationStartMonth_${eduIndex}`];
+        cleanedData[`educationStartYear_${arrayIndex}`] = data[`educationStartYear_${eduIndex}`];
+        cleanedData[`educationEndMonth_${arrayIndex}`] = data[`educationEndMonth_${eduIndex}`];
+        cleanedData[`educationEndYear_${arrayIndex}`] = data[`educationEndYear_${eduIndex}`];
+      }
+    });
+    
+    // Add only current certifications
+    certifications.forEach((certIndex, arrayIndex) => {
+      if (data[`certificationName_${certIndex}`]) {
+        cleanedData[`certificationName_${arrayIndex}`] = data[`certificationName_${certIndex}`];
+        cleanedData[`certificationYear_${arrayIndex}`] = data[`certificationYear_${certIndex}`];
+      }
+    });
+    
+    // Add only current additional sections
+    additionalSections.forEach((secIndex, arrayIndex) => {
+      if (data[`additionalSectionTitle_${secIndex}`] || data[`additionalSectionType_${secIndex}`]) {
+        cleanedData[`additionalSectionType_${arrayIndex}`] = data[`additionalSectionType_${secIndex}`];
+        cleanedData[`additionalSectionTitle_${arrayIndex}`] = data[`additionalSectionTitle_${secIndex}`];
+        cleanedData[`additionalSectionContent_${arrayIndex}`] = data[`additionalSectionContent_${secIndex}`];
+        // Handle project data if it exists
+        if (data[`projectName_${secIndex}_0`]) {
+          cleanedData[`projectName_${arrayIndex}_0`] = data[`projectName_${secIndex}_0`];
+          cleanedData[`projectDescription_${arrayIndex}_0`] = data[`projectDescription_${secIndex}_0`];
+          cleanedData[`projectStack_${arrayIndex}_0`] = data[`projectStack_${secIndex}_0`];
+          cleanedData[`projectUrl_${arrayIndex}_0`] = data[`projectUrl_${secIndex}_0`];
+        }
+        // Handle volunteer data if it exists
+        if (data[`volunteerOrg_${secIndex}`]) {
+          cleanedData[`volunteerOrg_${arrayIndex}`] = data[`volunteerOrg_${secIndex}`];
+          cleanedData[`volunteerYear_${arrayIndex}`] = data[`volunteerYear_${secIndex}`];
+        }
+      }
+    });
+    
+    console.log('Form onSubmit - cleaned data:', cleanedData);
+    onFormSubmit(cleanedData);
   };
 
   return (
@@ -546,6 +675,7 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
                       <select
                         {...register(`endMonth_${expIndex}`)}
                         className="date-select"
+                        disabled={currentlyWorking[expIndex]}
                       >
                         <option value="">Month</option>
                         <option value="Present">Present</option>
@@ -559,6 +689,7 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
                       <select
                         {...register(`endYear_${expIndex}`)}
                         className="date-select"
+                        disabled={currentlyWorking[expIndex]}
                       >
                         <option value="">Year</option>
                         <option value="Present">Present</option>
@@ -568,6 +699,29 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
                           </option>
                         ))}
                       </select>
+                    </div>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={currentlyWorking[expIndex] || false}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            setCurrentlyWorking(prev => ({ ...prev, [expIndex]: isChecked }));
+                            if (isChecked) {
+                              // Set both endMonth and endYear to 'Present' using setValue
+                              setValue(`endMonth_${expIndex}`, 'Present');
+                              setValue(`endYear_${expIndex}`, 'Present');
+                            } else {
+                              // Clear the values when unchecked
+                              setValue(`endMonth_${expIndex}`, '');
+                              setValue(`endYear_${expIndex}`, '');
+                            }
+                          }}
+                          style={{ width: 'auto', cursor: 'pointer' }}
+                        />
+                        <span>I currently work here</span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -700,6 +854,7 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
                       <select
                         {...register(`educationEndMonth_${eduIndex}`, { required: 'End month is required' })}
                         className="date-select"
+                        disabled={currentlyStudying[eduIndex]}
                       >
                         <option value="">Month</option>
                         <option value="Present">Present</option>
@@ -713,6 +868,7 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
                       <select
                         {...register(`educationEndYear_${eduIndex}`, { required: 'End year is required' })}
                         className="date-select"
+                        disabled={currentlyStudying[eduIndex]}
                       >
                         <option value="">Year</option>
                         <option value="Present">Present</option>
@@ -722,6 +878,29 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
                           </option>
                         ))}
                       </select>
+                    </div>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={currentlyStudying[eduIndex] || false}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            setCurrentlyStudying(prev => ({ ...prev, [eduIndex]: isChecked }));
+                            if (isChecked) {
+                              // Set both educationEndMonth and educationEndYear to 'Present' using setValue
+                              setValue(`educationEndMonth_${eduIndex}`, 'Present');
+                              setValue(`educationEndYear_${eduIndex}`, 'Present');
+                            } else {
+                              // Clear the values when unchecked
+                              setValue(`educationEndMonth_${eduIndex}`, '');
+                              setValue(`educationEndYear_${eduIndex}`, '');
+                            }
+                          }}
+                          style={{ width: 'auto', cursor: 'pointer' }}
+                        />
+                        <span>I currently study here</span>
+                      </label>
                     </div>
                     {(errors[`educationEndMonth_${eduIndex}`] || errors[`educationEndYear_${eduIndex}`]) && (
                       <span className="error">

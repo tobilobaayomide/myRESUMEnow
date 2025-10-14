@@ -38,7 +38,11 @@ function App() {
   }
 
   const handleFormSubmit = (data) => {
-    setResumeData(data)
+    // Create a new object reference with timestamp to ensure React detects the change
+    console.log('Form submitted with data:', data)
+    const newData = { ...data, _timestamp: Date.now() }
+    console.log('Setting resume data to:', newData)
+    setResumeData(newData)
     setCurrentPage('preview')
   }
 
@@ -75,6 +79,7 @@ function App() {
       case 'preview':
         return (
           <PreviewPage 
+            key={resumeData?._timestamp || Date.now()}
             resumeData={resumeData}
             onBack={handleBackToForm}
             onEdit={handleEditResume}
