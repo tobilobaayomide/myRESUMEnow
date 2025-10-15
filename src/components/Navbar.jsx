@@ -13,7 +13,6 @@ const Navbar = () => {
       <div className="nav-container">
         {/* Logo */}
         <div className="nav-logo">
-          <FileText className="logo-icon" />
           <span className="logo-text">my<span className="logo-highlight">RESUME</span>now</span>
         </div>
 
@@ -21,17 +20,16 @@ const Navbar = () => {
         <div className="nav-links">
           <a href="#home" className="nav-link">Home</a>
           <a href="#about" className="nav-link">About</a>
+          <a href="#contact" className="nav-link">Contact</a>
         </div>
 
         {/* Desktop Auth Buttons */}
         <div className="nav-auth desktop-auth">
           <button className="auth-btn login-btn">
-            <LogIn size={18} />
             Login
           </button>
           <button className="auth-btn signup-btn">
-            <User size={18} />
-            Sign Up
+            Get Started
           </button>
         </div>
 
@@ -43,13 +41,16 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="mobile-menu">
+            <div className="mobile-nav-links">
+              <a href="#home" className="mobile-nav-link" onClick={toggleMobileMenu}>Home</a>
+              <a href="#about" className="mobile-nav-link" onClick={toggleMobileMenu}>About</a>
+              <a href="#contact" className="mobile-nav-link" onClick={toggleMobileMenu}>Contact</a>
+            </div>
             <div className="mobile-auth">
               <button className="auth-btn login-btn mobile-auth-btn">
-                <LogIn size={18} />
                 Login
               </button>
               <button className="auth-btn signup-btn mobile-auth-btn">
-                <User size={18} />
                 Sign Up
               </button>
             </div>

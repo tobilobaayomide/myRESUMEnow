@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { ArrowRight, User, Mail, Phone, MapPin, Briefcase, GraduationCap, Award, Plus, X } from 'lucide-react';
+import { ArrowRight, User, Mail, Phone, MapPin, Briefcase, GraduationCap, Award, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
 import './FormPage.css';
 
 const FormPage = ({ onFormSubmit, onBack, existingData }) => {
@@ -104,6 +104,11 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
   const [additionalSections, setAdditionalSections] = useState(getAdditionalSectionIndices(existingData));
   const [currentlyWorking, setCurrentlyWorking] = useState(getInitialCurrentlyWorking(existingData));
   const [currentlyStudying, setCurrentlyStudying] = useState(getInitialCurrentlyStudying(existingData));
+  
+  // New state for improvements
+  const [formProgress, setFormProgress] = useState(0);
+  const [autoSaveStatus, setAutoSaveStatus] = useState('');
+  const [formData, setFormData] = useState(existingData || {});
 
   // Reset form when existingData changes
   useEffect(() => {
@@ -120,6 +125,112 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
     }
   }, [existingData, reset]);
 
+  // Auto-save functionality (#1)
+  useEffect(() => {
+    const saveToLocalStorage = () => {
+      try {
+        localStorage.setItem('resumeFormData', JSON.stringify(formData));
+        setAutoSaveStatus('Saved');
+        setTimeout(() => setAutoSaveStatus(''), 2000);
+      } catch (error) {
+        console.error('Error saving to localStorage:', error);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      if (Object.keys(formData).length > 0) {
+        saveToLocalStorage();
+      }
+    }, 1000);
+
+    return () => clearTimeout(debounceTimer);
+  }, [formData]);
+
+  // Load saved data on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('resumeFormData');
+      if (saved && !existingData) {
+        const parsedData = JSON.parse(saved);
+        reset(parsedData);
+        setFormData(parsedData);
+        setWorkExperiences(getWorkExperienceIndices(parsedData));
+        setEducations(getEducationIndices(parsedData));
+        setCertifications(getCertificationIndices(parsedData));
+        setAdditionalSections(getAdditionalSectionIndices(parsedData));
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+  }, []);
+
+  // Calculate form progress (#4)
+  useEffect(() => {
+    const calculateProgress = () => {
+      const requiredFields = [
+        'fullName', 'title', 'email', 'phone', 'location', 'summary', 'skills'
+      ];
+      
+      let filledCount = 0;
+      let totalCount = requiredFields.length;
+      
+      // Check required fields
+      requiredFields.forEach(field => {
+        if (formData[field] && formData[field].trim() !== '') {
+          filledCount++;
+        }
+      });
+      
+      // Check work experience (at least one)
+      const hasWorkExp = workExperiences.some(exp => 
+        formData[`jobTitle_${exp}`] && formData[`company_${exp}`]
+      );
+      if (hasWorkExp) filledCount++;
+      totalCount++;
+      
+      // Check education (at least one)
+      const hasEducation = educations.some(edu => 
+        formData[`degree_${edu}`] && formData[`institution_${edu}`]
+      );
+      if (hasEducation) filledCount++;
+      totalCount++;
+      
+      const progress = Math.round((filledCount / totalCount) * 100);
+      setFormProgress(progress);
+    };
+    
+    calculateProgress();
+  }, [formData, workExperiences, educations]);
+
+  // Watch form changes for auto-save
+  useEffect(() => {
+    const subscription = {
+      subscribe: (callback) => {
+        const form = document.querySelector('form');
+        if (form) {
+          const handleChange = (e) => {
+            const formElements = new FormData(form);
+            const data = {};
+            for (let [key, value] of formElements.entries()) {
+              data[key] = value;
+            }
+            setFormData(data);
+          };
+          
+          form.addEventListener('input', handleChange);
+          form.addEventListener('change', handleChange);
+          
+          return () => {
+            form.removeEventListener('input', handleChange);
+            form.removeEventListener('change', handleChange);
+          };
+        }
+      }
+    };
+    
+    return subscription.subscribe();
+  }, []);
+
   // Generate arrays for dropdowns
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -127,7 +238,7 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
   ];
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 25 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
   const certificationYears = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
   const nigerianStates = [
@@ -363,7 +474,7 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
                     {...register(`volunteerYear_${sectionIndex}`)}
                     className="date-select"
                   >
-                    <option value="">Select Year (Optional)</option>
+                    <option value="">Select Year</option>
                     {certificationYears.map(year => (
                       <option key={year} value={year}>
                         {year}
@@ -372,6 +483,7 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
                   </select>
                   <small className="form-hint">Select a year or leave blank</small>
                 </div>
+                
               </div>
             </div>
             <small className="form-hint">Add multiple volunteer experiences by creating multiple volunteer sections</small>
@@ -466,7 +578,14 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
     
     // Add only current additional sections
     additionalSections.forEach((secIndex, arrayIndex) => {
-      if (data[`additionalSectionTitle_${secIndex}`] || data[`additionalSectionType_${secIndex}`]) {
+      // Check if section has data - either title, type, content, project data, or volunteer data
+      const hasData = data[`additionalSectionTitle_${secIndex}`] || 
+                      data[`additionalSectionType_${secIndex}`] ||
+                      data[`additionalSectionContent_${secIndex}`] ||
+                      data[`projectName_${secIndex}_0`] ||
+                      data[`volunteerOrg_${secIndex}`];
+      
+      if (hasData) {
         cleanedData[`additionalSectionType_${arrayIndex}`] = data[`additionalSectionType_${secIndex}`];
         cleanedData[`additionalSectionTitle_${arrayIndex}`] = data[`additionalSectionTitle_${secIndex}`];
         cleanedData[`additionalSectionContent_${arrayIndex}`] = data[`additionalSectionContent_${secIndex}`];
@@ -491,6 +610,11 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
 
   return (
     <div className="form-page">
+      {/* Progress Bar */}
+      <div className="form-progress">
+        <div className="form-progress-bar" style={{ width: `${formProgress}%` }}></div>
+      </div>
+      
       <div className="form-container">
         <div className="form-header">
           <button className="back-button" onClick={onBack}>
@@ -498,6 +622,27 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
           </button>
           <h1>Tell Us About Yourself</h1>
           <p>Fill in your details to create your professional resume</p>
+          
+          {/* Progress and Auto-save indicators */}
+          <div className="header-indicators">
+            <div className="progress-indicator">
+              <div className="progress-circle" style={{ 
+                background: `conic-gradient(#16a34a ${formProgress * 3.6}deg, #e5e7eb ${formProgress * 3.6}deg)` 
+              }}>
+                <div className="progress-circle-inner">
+                  <span className="progress-percent">{formProgress}%</span>
+                </div>
+              </div>
+              <span className="progress-label">Complete</span>
+            </div>
+            
+            {autoSaveStatus && (
+              <div className="autosave-indicator">
+                <CheckCircle size={16} />
+                <span>{autoSaveStatus}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="resume-form">
@@ -527,18 +672,31 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
 
               <div className="form-group">
                 <label>Email</label>
-                <input
-                  type="email"
-                  {...register('email', { 
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^\S+@\S+$/i,
-                      message: 'Invalid email address'
-                    }
-                  })}
-                  placeholder="your email address"
-                />
-                {errors.email && <span className="error">{errors.email.message}</span>}
+                <div className="input-with-validation">
+                  <input
+                    type="email"
+                    className={errors.email ? 'input-error' : (formData.email?.trim() ? 'input-valid' : '')}
+                    {...register('email', { 
+                      required: 'Email is required',
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: 'Please enter a valid email address'
+                      }
+                    })}
+                    placeholder="your email address"
+                  />
+                  {!errors.email && formData.email?.trim() && (
+                    <CheckCircle className="field-valid-icon" size={18} />
+                  )}
+                  {errors.email && (
+                    <AlertCircle className="field-error-icon" size={18} />
+                  )}
+                </div>
+                {errors.email && (
+                  <span className="error">
+                    {errors.email.message}
+                  </span>
+                )}
               </div>
 
               <div className="form-group">
@@ -1122,7 +1280,6 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
 
           <button type="submit" className="submit-button">
             Create My Resume
-            <ArrowRight size={20} />
           </button>
         </form>
       </div>

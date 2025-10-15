@@ -6,24 +6,29 @@
 }
 
 :root {
-  /* Color scheme - White and Light Green */
-  --primary-green: #4ade80;
-  --light-green: #86efac;
-  --dark-green: #22c55e;
+  /* Refined Green Color Scheme */
+  --primary-green: #16a34a;
+  --light-green: #22c55e;
+  --dark-green: #15803d;
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
   --white: #ffffff;
   --light-gray: #f8fafc;
   --gray: #64748b;
-  --dark-gray: #334155;
+  --dark-gray: #0f172a;
   --border-color: #e2e8f0;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 body {
-  font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+  font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background-color: var(--white);
   color: var(--dark-gray);
-  line-height: 1.6;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .app {
@@ -70,15 +75,17 @@ body {
 }
 
 .logo-icon {
-  color: #059669;
+  color: #16a34a;
 }
 
 .logo-text {
-  color: #1a1a1a;
+  color: #0f172a;
+  font-weight: 800;
 }
 
 .logo-highlight {
-  color: #059669;
+  color: #16a34a;
+  font-weight: 900;
 }
 
 .nav-links {
@@ -98,8 +105,8 @@ body {
 }
 
 .nav-link:hover {
-  color: #059669;
-  background-color: #f9fafb;
+  color: #16a34a;
+  background-color: #f0fdf4;
 }
 
 .nav-auth {
@@ -175,14 +182,15 @@ body {
 }
 
 .signup-btn {
-  background-color: #059669;
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
   color: white;
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
 }
 
 .signup-btn:hover {
-  background-color: #047857;
+  background: linear-gradient(135deg, #15803d 0%, #14532d 100%);
   transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(5, 150, 105, 0.2);
+  box-shadow: 0 10px 25px rgba(22, 163, 74, 0.3);
 }
 
 /* Button Styles */
@@ -307,7 +315,7 @@ input:focus, textarea:focus {
 /* Responsive Design */
 @media (max-width: 768px) {
   .nav-container {
-    padding: 0 1rem;
+    padding: 0 0.75rem;
     position: relative;
   }
   
@@ -323,21 +331,80 @@ input:focus, textarea:focus {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0.4rem;
   }
   
   .nav-logo {
-    font-size: 1.3rem;
-  }
-  
-  .page-container {
-    padding: 1rem;
-  }
-  
-  .main-content {
-    padding-top: 70px;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
   }
   
   .navbar {
-    height: 70px;
+    height: 56px;
+    background-color: #ffffff;
+    backdrop-filter: none;
+  }
+  
+  .mobile-menu {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(100vh - 56px);
+    padding: 0;
+    background-color: #ffffff;
+    backdrop-filter: none;
+    border-bottom: none;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mobile-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 2rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+    flex: 1;
+  }
+  
+  .mobile-nav-link {
+    text-decoration: none;
+    color: #374151;
+    font-weight: 600;
+    padding: 2rem 2.25rem;
+    font-size: 1.05rem;
+    transition: all 0.2s ease;
+    border-radius: 12px;
+    border-left: none;
+    text-align: center;
+  }
+  
+  .mobile-nav-link:hover,
+  .mobile-nav-link:active {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    transform: translateX(4px);
+  }
+  
+  .mobile-auth {
+    padding: 1.25rem 1.25rem 2rem;
+    gap: 0.875rem;
+    margin-top: auto;
+  }
+  
+  .mobile-auth-btn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+  
+  .page-container {
+    padding: 0.75rem;
+  }
+  
+  .main-content {
+    padding-top: 56px;
   }
 }

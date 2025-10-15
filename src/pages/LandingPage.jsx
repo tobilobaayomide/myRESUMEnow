@@ -1,5 +1,6 @@
-import { ArrowRight, FileText, CheckCircle, Star, Users, Zap, Shield, Award, Eye, Upload } from 'lucide-react';
+import { CheckCircle, Shield, Eye, Zap, Award, Upload, FileText, Download, ArrowRight } from 'lucide-react';
 import './LandingPage.css';
+import previewTemplate from '../assets/preview template.jpeg';
 
 const LandingPage = ({ onStartCreating, onUploadResume }) => {
   return (
@@ -8,183 +9,179 @@ const LandingPage = ({ onStartCreating, onUploadResume }) => {
       <section className="hero-section">
         <div className="hero-container">
           <div className="hero-content">
-            <h1 className="hero-title">
-              Build Your Professional Resume
-              <span className="highlight"> In Minutes</span>
-            </h1>
-            <p className="hero-subtitle">
-              Create a standout resume that gets you noticed by employers. 
-              Professional templates, easy customization, and instant download.
-            </p>
-            
-            <div className="hero-visual">
-              <div className="resume-preview">
-                <div className="resume-card">
-                  <div className="resume-header"></div>
-                  <div className="resume-content">
-                    <div className="content-line long"></div>
-                    <div className="content-line medium"></div>
-                    <div className="content-line short"></div>
-                    <div className="content-line medium"></div>
-                    <div className="content-line long"></div>
-                    <div className="content-line short"></div>
-                  </div>
-                </div>
+            <div className="social-proof">
+              <span className="proof-text">Used by professionals</span>
+              <div className="rating">
+                <span className="stars">★★★★★</span>
+                <span className="rating-score">4.8/5</span>
               </div>
             </div>
             
+            <h1 className="hero-title">
+              Professional Resumes That <span className="title-accent">Get You Hired</span>
+            </h1>
+            <p className="hero-subtitle">
+              ATS-optimized template used by professionals at <strong>top companies</strong>. Build yours in <strong>10 minutes</strong>.
+            </p>
+            
             <div className="hero-cta">
               <button className="cta-button primary" onClick={onStartCreating}>
-                <FileText size={20} />
                 Create Resume Now
               </button>
               
-              <div className="upload-option">
-                <label className="upload-button">
-                  <Upload size={18} />
-                  Upload Existing Resume
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.txt"
-                    onChange={onUploadResume}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-              </div>
+              <label className="upload-link">
+                or upload existing resume
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt"
+                  onChange={onUploadResume}
+                  style={{ display: 'none' }}
+                />
+              </label>
             </div>
             
             <div className="trust-indicators">
               <div className="trust-item">
                 <CheckCircle size={16} />
-                <span>Free to use</span>
+                <span>Free To Use</span>
               </div>
               <div className="trust-item">
                 <CheckCircle size={16} />
-                <span>No registration required</span>
+                <span>SignUp Optional</span>
               </div>
               <div className="trust-item">
                 <CheckCircle size={16} />
-                <span>Instant download</span>
+                <span>ATS-Ready</span>
               </div>
             </div>
           </div>
           
-          <div className="hero-visual-desktop">
-            <div className="resume-preview">
-              <div className="resume-card">
-                <div className="resume-header"></div>
-                <div className="resume-content">
-                  <div className="content-line long"></div>
-                  <div className="content-line medium"></div>
-                  <div className="content-line short"></div>
-                  <div className="content-line medium"></div>
-                  <div className="content-line long"></div>
-                  <div className="content-line short"></div>
-                </div>
+          <div className="hero-visual">
+            <div className="resume-screenshot">
+              <div className="preview-badge">
+                <Eye size={14} />
+                <span>Live Preview</span>
               </div>
+              <div className="screenshot-wrapper">
+                <img 
+                  src={previewTemplate} 
+                  alt="Professional Resume Preview" 
+                  className="resume-preview-image"
+                />
+              </div>
+              <div className="floating-shape shape-1"></div>
+              <div className="floating-shape shape-2"></div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Why You Need a Resume Section */}
-      <section className="features-section">
+      {/* How It Works Section */}
+      <section className="how-it-works-section">
         <div className="section-container">
-          <div className="section-header">
-            <h2>Why Do You Need a Professional Resume?</h2>
-            <p>A well-crafted resume is your gateway to career opportunities and professional success</p>
-          </div>
+          <h2 className="section-title-simple">How it Works</h2>
           
-          <div className="features-list">
-            <div className="list-item">
-              <div className="list-icon">
-                <Eye />
+          <div className="steps-grid">
+            <div className="step-card">
+              <div className="step-icon-wrapper">
               </div>
-              <div className="list-content">
-                <h3>First Impression Matters</h3>
-                <p>Recruiters spend only 6 seconds scanning your resume. Make those seconds count with a professional layout that highlights your best qualities.</p>
-              </div>
+              <div className="step-number">1</div>
+              <h3>Add Your Details</h3>
+              <p>Type in your info or upload your existing resume. We'll format everything perfectly</p>
             </div>
             
-            <div className="list-item">
-              <div className="list-icon">
-                <Users />
-              </div>
-              <div className="list-content">
-                <h3>Stand Out from Competition</h3>
-                <p>Professional resumes get 2.5x more interview calls. Differentiate yourself from other candidates with clear formatting and strategic content.</p>
-              </div>
+            <div className="step-arrow">
+              <ArrowRight size={24} />
             </div>
             
-            <div className="list-item">
-              <div className="list-icon">
-                <Shield />
+            <div className="step-card">
+              <div className="step-icon-wrapper">
               </div>
-              <div className="list-content">
-                <h3>Beat ATS Systems</h3>
-                <p>90% of companies use Applicant Tracking Systems. Our format ensures your resume passes through these filters successfully.</p>
-              </div>
+              <div className="step-number">2</div>
+              <h3>Preview Your Resume</h3>
+              <p>See your resume take shape in real-time. Edit on the fly with live preview</p>
             </div>
             
-            <div className="list-item">
-              <div className="list-icon">
-                <Award />
+            <div className="step-arrow">
+              <ArrowRight size={24} />
+            </div>
+            
+            <div className="step-card">
+              <div className="step-icon-wrapper">
               </div>
-              <div className="list-content">
-                <h3>Showcase Your Value</h3>
-                <p>Properly structured resumes help you present your achievements and skills in a way that demonstrates your true professional worth.</p>
-              </div>
+              <div className="step-number">3</div>
+              <h3>Download in PDF</h3>
+              <p>Hit download and get a professional PDF ready to send to employers</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Resume Impact Section */}
-      <section className="benefits-section">
+      {/* Why Choose Us Section */}
+      <section className="why-section">
         <div className="section-container">
-          <div className="section-header">
-            <h2>The Power of a Professional Resume</h2>
-            <p>Your resume is more than a document - it's your career catalyst</p>
+          <div className="why-header">
+            <h2 className="section-title-simple">Why <span className="title-accent">myRESUMEnow</span>?</h2>
           </div>
           
-          <div className="benefits-list">
-            <div className="list-item">
-              <div className="list-icon">
-                <Zap />
+          <div className="features-list-section">
+            <div className="feature-item">
+              <div className="feature-icon-large">
+                <CheckCircle size={28} />
               </div>
-              <div className="list-content">
-                <h3>Opens Career Doors</h3>
-                <p>A professional resume is your ticket to job interviews. It's often the first thing employers see and determines whether you get called for an interview or passed over.</p>
-              </div>
-            </div>
-            
-            <div className="list-item">
-              <div className="list-icon">
-                <Star />
-              </div>
-              <div className="list-content">
-                <h3>Increases Earning Potential</h3>
-                <p>Well-presented resumes lead to better job opportunities and higher salary negotiations. Your resume directly impacts your career trajectory and earning potential.</p>
+              <div className="feature-content">
+                <h4>Clickable Links</h4>
+                <p>Add working links to your portfolio, LinkedIn, and email recruiters can click right in the PDF</p>
               </div>
             </div>
             
-            <div className="list-item">
-              <div className="list-icon">
-                <Users />
+            <div className="feature-item">
+              <div className="feature-icon-large">
+                <Zap size={28} />
               </div>
-              <div className="list-content">
-                <h3>Builds Professional Credibility</h3>
-                <p>A polished resume reflects your attention to detail and professionalism. It establishes credibility before you even meet potential employers face-to-face.</p>
+              <div className="feature-content">
+                <h4>Super Simple</h4>
+                <p>No complicated editors or confusing templates. Just fill in your info and you're done</p>
               </div>
             </div>
             
-            <div className="list-item">
-              <div className="list-icon">
-                <FileText />
+            <div className="feature-item">
+              <div className="feature-icon-large">
+                <Shield size={28} />
               </div>
-              <div className="list-content">
-                <h3>Organizes Your Career Story</h3>
-                <p>Creating a resume helps you reflect on your achievements and articulate your value proposition. It's a powerful tool for self-assessment and career planning.</p>
+              <div className="feature-content">
+                <h4>ATS-Ready</h4>
+                <p>This format passes automated screening systems that most of companies use</p>
+              </div>
+            </div>
+            
+            <div className="feature-item">
+              <div className="feature-icon-large">
+                <Eye size={28} />
+              </div>
+              <div className="feature-content">
+                <h4>Clean Design</h4>
+                <p>Professional layout optimized for the 6-second recruiter scan</p>
+              </div>
+            </div>
+            
+            <div className="feature-item">
+              <div className="feature-icon-large">
+                <Award size={28} />
+              </div>
+              <div className="feature-content">
+                <h4>Instant PDF Download</h4>
+                <p>Get your polished resume in seconds. No waiting, no hassle</p>
+              </div>
+            </div>
+            
+            <div className="feature-item">
+              <div className="feature-icon-large">
+                <CheckCircle size={28} />
+              </div>
+              <div className="feature-content">
+                <h4>Completely Free</h4>
+                <p>No hidden costs, no premium tiers. Everything is free</p>
               </div>
             </div>
           </div>
@@ -193,18 +190,52 @@ const LandingPage = ({ onStartCreating, onUploadResume }) => {
 
       {/* CTA Section */}
       <section className="final-cta-section">
+        <div className="cta-background-shapes">
+          <div className="shape-blob shape-1"></div>
+          <div className="shape-blob shape-2"></div>
+          <div className="shape-blob shape-3"></div>
+        </div>
         <div className="section-container">
           <div className="cta-content">
-            <h2>Ready to Build Your Resume?</h2>
-            <p>Join thousands of job seekers who have successfully created their professional resumes</p>
-            <button className="cta-button large" onClick={onStartCreating}>
-              <FileText size={24} />
-              Start Building Now
-              <ArrowRight size={24} />
-            </button>
+            <h2>Your Perfect Resume is 10 Minutes Away</h2>
+            <p>Join 10,000+ professionals who landed their dream jobs with our resume builder</p>
+            
+            <div className="cta-buttons">
+              <button className="cta-button-primary" onClick={onStartCreating}>
+                <Zap size={20} />
+                Create Resume Now
+              </button>
+              
+              <label className="cta-button-secondary">
+                <Award size={20} />
+                Or Upload Existing
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt"
+                  onChange={onUploadResume}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+            
           </div>
         </div>
       </section>
+      
+      {/* Footer */}
+      <footer className="footer">
+        <div className="section-container">
+          <div className="footer-content">
+            <div className="footer-brand">
+              <span className="logo-text">my<span className="logo-highlight">RESUME</span>now</span>
+              <p>Professional Resume Builder</p>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>© 2025 myRESUMEnow. All rights reserved. · Built by Tobiloba</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

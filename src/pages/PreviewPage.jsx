@@ -12,6 +12,7 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
   const documentRef = useRef(null);
   const previewContainerRef = useRef(null);
   const [isRendered, setIsRendered] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const handleDownload = async (e) => {
     // Prevent any default behavior
@@ -25,6 +26,11 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
       return;
     }
 
+    if (isDownloading) {
+      return; // Prevent multiple downloads
+    }
+
+    setIsDownloading(true);
     console.log('=== STARTING PDF DOWNLOAD ===');
 
     try {
@@ -193,6 +199,8 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF: ' + error.message);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -641,6 +649,7 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
     // Collect all sections first
     while (resumeData[`additionalSectionType_${index}`] || resumeData[`additionalSectionTitle_${index}`]) {
       const sectionType = resumeData[`additionalSectionType_${index}`] || 'custom';
+      console.log(`Processing section ${index}, type: ${sectionType}`);
       
       // Skip if no valid data
       if (!sectionType && !resumeData[`additionalSectionTitle_${index}`]) {
@@ -687,10 +696,14 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
           organization: resumeData[`volunteerOrg_${index}`],
           year: resumeData[`volunteerYear_${index}`]
         };
+        console.log(`Volunteer section ${index}:`, volunteerData);
         // Only add if there's actual volunteer data
         if (volunteerData.organization || section.content) {
           section.volunteerData = volunteerData;
           allSections.push(section);
+          console.log(`Added volunteer section ${index} to allSections`);
+        } else {
+          console.log(`Skipped volunteer section ${index} - no data`);
         }
       } else if (section.content || section.title) {
         // Only add if there's content or title
@@ -793,6 +806,39 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
     const allContent = [];
     const addedContent = new Set(); // Track added content to avoid duplicates
     
+    // Handle volunteer sections specially (they have volunteerData, not content)
+    if (type === 'volunteer') {
+      items.forEach(section => {
+        if (section.volunteerData && section.volunteerData.organization) {
+          const contentKey = `${section.index}-structured`;
+          if (!addedContent.has(contentKey)) {
+            addedContent.add(contentKey);
+            allContent.push(
+              <div key={contentKey} className="volunteer-item-inline">
+                <div className="volunteer-header">
+                  <strong className="volunteer-org-inline">{section.volunteerData.organization}</strong>
+                  {section.volunteerData.year && (
+                    <span className="volunteer-year-inline">{section.volunteerData.year}</span>
+                  )}
+                </div>
+              </div>
+            );
+          }
+        } else if (section.content) {
+          // Fallback to text-based content parsing
+          const lines = section.content.split('\n').filter(line => line.trim());
+          lines.forEach(line => {
+            const contentKey = `${section.index}-${line}`;
+            if (!addedContent.has(contentKey)) {
+              addedContent.add(contentKey);
+              allContent.push(line.trim());
+            }
+          });
+        }
+      });
+      return allContent;
+    }
+    
     items.forEach(section => {
       if (!section.content) return;
       
@@ -824,36 +870,6 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
               } else {
                 allContent.push(line.trim());
               }
-            }
-          });
-          break;
-        
-        case 'volunteer':
-          // Check if we have structured volunteer data
-          items.forEach(section => {
-            if (section.volunteerData && section.volunteerData.organization) {
-              const contentKey = `${section.index}-structured`;
-              if (!addedContent.has(contentKey)) {
-                addedContent.add(contentKey);
-                allContent.push(
-                  <div key={contentKey} className="volunteer-item-inline">
-                    <strong className="volunteer-org-inline">{section.volunteerData.organization}</strong>
-                    {section.volunteerData.year && (
-                      <span className="volunteer-year-inline">{section.volunteerData.year}</span>
-                    )}
-                  </div>
-                );
-              }
-            } else if (section.content) {
-              // Fallback to text-based content parsing
-              const lines = section.content.split('\n').filter(line => line.trim());
-              lines.forEach(line => {
-                const contentKey = `${section.index}-${line}`;
-                if (!addedContent.has(contentKey)) {
-                  addedContent.add(contentKey);
-                  allContent.push(line.trim());
-                }
-              });
             }
           });
           break;
@@ -1064,7 +1080,7 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
         {additionalSections.length > 0 && additionalSections.map((groupedSection, index) => (
           <div key={index} className="resume-section">
             <h3 className="section-title">{groupedSection.title}</h3>
-            {groupedSection.type === 'projects' ? (
+            {groupedSection.type === 'projects' || groupedSection.type === 'volunteer' ? (
               <div className="projects-section">
                 {formatSectionContent(groupedSection).map((item, itemIndex) => (
                   <div key={itemIndex}>{item}</div>
@@ -1086,12 +1102,17 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
 
       <div className="preview-actions">
         <button type="button" className="edit-button" onClick={onEdit}>
-          <Edit size={18} />
+          <Edit size={16} />
           Edit Resume
         </button>
-        <button type="button" className="download-button" onClick={handleDownload}>
-          <Download size={18} />
-          Download PDF 
+        <button 
+          type="button" 
+          className={`download-button ${isDownloading ? 'loading' : ''}`}
+          onClick={handleDownload}
+          disabled={isDownloading}
+        >
+          {!isDownloading && <Download size={16} />}
+          {isDownloading ? 'Generating...' : 'Download PDF'}
         </button>
       </div>
     </div>
