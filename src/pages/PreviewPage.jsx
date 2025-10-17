@@ -1,11 +1,13 @@
 import { Download, ArrowLeft, Edit } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import './PreviewPage.css';
 
-const PreviewPage = ({ resumeData, onBack, onEdit }) => {
+const PreviewPage = ({ resumeData }) => {
+  const navigate = useNavigate();
   console.log('PreviewPage component mounted/re-rendered');
   console.log('Received resumeData:', resumeData);
   
@@ -649,7 +651,6 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
     // Collect all sections first
     while (resumeData[`additionalSectionType_${index}`] || resumeData[`additionalSectionTitle_${index}`]) {
       const sectionType = resumeData[`additionalSectionType_${index}`] || 'custom';
-      console.log(`Processing section ${index}, type: ${sectionType}`);
       
       // Skip if no valid data
       if (!sectionType && !resumeData[`additionalSectionTitle_${index}`]) {
@@ -696,14 +697,10 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
           organization: resumeData[`volunteerOrg_${index}`],
           year: resumeData[`volunteerYear_${index}`]
         };
-        console.log(`Volunteer section ${index}:`, volunteerData);
         // Only add if there's actual volunteer data
         if (volunteerData.organization || section.content) {
           section.volunteerData = volunteerData;
           allSections.push(section);
-          console.log(`Added volunteer section ${index} to allSections`);
-        } else {
-          console.log(`Skipped volunteer section ${index} - no data`);
         }
       } else if (section.content || section.title) {
         // Only add if there's content or title
@@ -1101,7 +1098,7 @@ const PreviewPage = ({ resumeData, onBack, onEdit }) => {
       <div ref={previewContainerRef} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', paddingTop: '3rem' }}></div>
 
       <div className="preview-actions">
-        <button type="button" className="edit-button" onClick={onEdit}>
+        <button type="button" className="edit-button" onClick={() => navigate('/form')}>
           <Edit size={16} />
           Edit Resume
         </button>

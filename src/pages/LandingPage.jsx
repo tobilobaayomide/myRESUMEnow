@@ -1,8 +1,33 @@
 import { CheckCircle, Shield, Eye, Zap, Award, Upload, FileText, Download, ArrowRight } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
 import './LandingPage.css';
-import previewTemplate from '../assets/preview template.jpeg';
+import previewTemplate from '../assets/preview-template.jpeg';
 
-const LandingPage = ({ onStartCreating, onUploadResume }) => {
+const LandingPage = ({ onUploadResume, onCreateNew }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const scrollTo = searchParams.get('scrollTo');
+    if (scrollTo === 'how-it-works') {
+      // Small delay to ensure the page is fully rendered
+      setTimeout(() => {
+        const section = document.getElementById('how-it-works');
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [searchParams]);
+  
+  const handleCreateResume = () => {
+    if (onCreateNew) {
+      onCreateNew(); // Clear any existing data
+    }
+    navigate('/form');
+  };
+  
   return (
     <div className="landing-page">
       {/* Hero Section */}
@@ -25,16 +50,16 @@ const LandingPage = ({ onStartCreating, onUploadResume }) => {
             </p>
             
             <div className="hero-cta">
-              <button className="cta-button primary" onClick={onStartCreating}>
+              <button className="cta-button primary" onClick={handleCreateResume}>
                 Create Resume Now
               </button>
               
               <label className="upload-link">
-                or upload existing resume
+                or upload existing resume (.docx)
                 <input
                   type="file"
-                  accept=".pdf,.doc,.docx,.txt"
-                  onChange={onUploadResume}
+                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={(e) => onUploadResume(e, navigate)}
                   style={{ display: 'none' }}
                 />
               </label>
@@ -77,7 +102,7 @@ const LandingPage = ({ onStartCreating, onUploadResume }) => {
       </section>
 
       {/* How It Works Section */}
-      <section className="how-it-works-section">
+      <section id="how-it-works" className="how-it-works-section">
         <div className="section-container">
           <h2 className="section-title-simple">How it Works</h2>
           
@@ -201,18 +226,18 @@ const LandingPage = ({ onStartCreating, onUploadResume }) => {
             <p>Join 10,000+ professionals who landed their dream jobs with our resume builder</p>
             
             <div className="cta-buttons">
-              <button className="cta-button-primary" onClick={onStartCreating}>
+              <button className="cta-button-primary" onClick={handleCreateResume}>
                 <Zap size={20} />
                 Create Resume Now
               </button>
               
               <label className="cta-button-secondary">
                 <Award size={20} />
-                Or Upload Existing
+                Or Upload Existing (.docx)
                 <input
                   type="file"
-                  accept=".pdf,.doc,.docx,.txt"
-                  onChange={onUploadResume}
+                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={(e) => onUploadResume(e, navigate)}
                   style={{ display: 'none' }}
                 />
               </label>

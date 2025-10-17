@@ -525,42 +525,21 @@
   .preview-page {
     padding: 0.5rem;
     overflow-x: hidden;
-    overflow-y: visible;
-    min-height: 100vh;
+    padding-top: 56px; /* Account for fixed navbar */
   }
   
   .preview-container {
-    overflow: visible !important;
-    max-width: 100% !important;
-    min-height: auto !important;
-    height: auto !important;
-  }
-  
-  .resume-document {
-    overflow: visible !important;
-    height: auto !important;
-  }
-  
-  /* Ensure pagedjs container is visible */
-  .pagedjs_pages {
-    overflow: visible !important;
-    height: auto !important;
-    display: block !important;
+    padding-top: 0.5rem;
+    gap: 1rem;
   }
   
   /* Scale the entire page container to fit mobile */
   .pagedjs_page {
     width: 210mm !important;
     height: 297mm !important;
-    transform: scale(0.45) !important;
-    transform-origin: top center !important;
-    /* Scale creates 297mm space but only 134mm visible (297 * 0.45)
-       Dead space = 163mm. Use -150mm to bring pages closer, leaving ~13mm gap */
-    margin: 0 auto -150mm !important;
-    display: block !important;
-    position: relative !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    transform: scale(0.45);
+    transform-origin: top center;
+    margin: 0 auto -155mm !important; /* Negative margin to compensate for scale */
   }
   
   /* First page should have proper top spacing */
@@ -568,34 +547,83 @@
     margin-top: 0 !important;
   }
   
-  /* Last page bottom spacing - offset the negative margin */
-  .pagedjs_page:last-child {
-    margin-bottom: 2rem !important;
-  }
-  
   .preview-actions {
     flex-direction: column;
     gap: 0.75rem;
     width: 100%;
     max-width: 300px;
-    margin: 2rem auto 1rem;
+    margin: 1rem auto;
+    padding: 0 0.5rem;
   }
   
   .edit-button,
   .download-button {
     width: 100%;
     justify-content: center;
-    padding: 0.8rem 1.5rem;
-    font-size: 0.85rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .resume-document {
+    gap: 1rem;
   }
 }
 
 /* Tablet - scale slightly for better fit */
 @media (min-width: 769px) and (max-width: 1024px) {
+  .preview-page {
+    padding: 1rem;
+  }
+
+  .preview-container {
+    max-width: 800px;
+  }
+
   .pagedjs_page {
-    transform: scale(0.7);
+    transform: scale(0.75);
     transform-origin: top center;
-    margin: 0 auto -88mm !important;
+    margin: 0 auto -74mm !important;
+  }
+
+  .preview-actions {
+    gap: 0.75rem;
+  }
+
+  .edit-button,
+  .download-button {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .preview-page {
+    padding: 0.25rem;
+  }
+
+  .pagedjs_page {
+    transform: scale(0.38);
+    margin: 0 auto -183mm !important;
+  }
+
+  .preview-actions {
+    max-width: 280px;
+    gap: 0.65rem;
+  }
+
+  .edit-button,
+  .download-button {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .pagedjs_page {
+    transform: scale(0.35);
+    margin: 0 auto -192mm !important;
   }
 }
 

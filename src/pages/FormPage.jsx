@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { saveResume, updateResume } from '../firebase/firestore';
 import { ArrowRight, User, Mail, Phone, MapPin, Briefcase, GraduationCap, Award, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
 import './FormPage.css';
 
-const FormPage = ({ onFormSubmit, onBack, existingData }) => {
+const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
+  console.log('🎯 FormPage component is rendering');
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
   console.log('FormPage received existingData:', existingData);
+  console.log('Current resumeId:', currentResumeId);
+  console.log('Current user:', currentUser);
   
   // Helper function to extract work experience indices from existing data
   const getWorkExperienceIndices = (data) => {
@@ -122,18 +130,35 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
       setAdditionalSections(getAdditionalSectionIndices(existingData));
       setCurrentlyWorking(getInitialCurrentlyWorking(existingData));
       setCurrentlyStudying(getInitialCurrentlyStudying(existingData));
+      setFormData(existingData);
+    } else {
+      // If existingData is null, clear the form completely
+      console.log('No existingData - starting with clean slate');
+      reset({});
+      setWorkExperiences([0]);
+      setEducations([0]);
+      setCertifications([]);
+      setAdditionalSections([]);
+      setCurrentlyWorking({});
+      setCurrentlyStudying({});
+      setFormData({});
+      // Clear localStorage when starting fresh
+      localStorage.removeItem('resumeFormData');
     }
   }, [existingData, reset]);
 
-  // Auto-save functionality (#1)
+  // Auto-save functionality (#1) - Only for guest users
   useEffect(() => {
     const saveToLocalStorage = () => {
-      try {
-        localStorage.setItem('resumeFormData', JSON.stringify(formData));
-        setAutoSaveStatus('Saved');
-        setTimeout(() => setAutoSaveStatus(''), 2000);
-      } catch (error) {
-        console.error('Error saving to localStorage:', error);
+      // Only save to localStorage for guest users (not logged in)
+      if (!currentUser) {
+        try {
+          localStorage.setItem('resumeFormData', JSON.stringify(formData));
+          setAutoSaveStatus('Saved locally');
+          setTimeout(() => setAutoSaveStatus(''), 2000);
+        } catch (error) {
+          console.error('Error saving to localStorage:', error);
+        }
       }
     };
 
@@ -144,23 +169,30 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
     }, 1000);
 
     return () => clearTimeout(debounceTimer);
-  }, [formData]);
+  }, [formData, currentUser]);
 
-  // Load saved data on mount
+  // Load saved data on mount - ONLY for guest users with no account
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('resumeFormData');
-      if (saved && !existingData) {
-        const parsedData = JSON.parse(saved);
-        reset(parsedData);
-        setFormData(parsedData);
-        setWorkExperiences(getWorkExperienceIndices(parsedData));
-        setEducations(getEducationIndices(parsedData));
-        setCertifications(getCertificationIndices(parsedData));
-        setAdditionalSections(getAdditionalSectionIndices(parsedData));
+    // Only load from localStorage if:
+    // 1. User is NOT logged in (guest mode)
+    // 2. No existing data is being passed (not editing)
+    // 3. No currentResumeId (not editing existing resume)
+    if (!currentUser && !existingData && !currentResumeId) {
+      try {
+        const saved = localStorage.getItem('resumeFormData');
+        if (saved) {
+          console.log('Loading saved guest data from localStorage');
+          const parsedData = JSON.parse(saved);
+          reset(parsedData);
+          setFormData(parsedData);
+          setWorkExperiences(getWorkExperienceIndices(parsedData));
+          setEducations(getEducationIndices(parsedData));
+          setCertifications(getCertificationIndices(parsedData));
+          setAdditionalSections(getAdditionalSectionIndices(parsedData));
+        }
+      } catch (error) {
+        console.error('Error loading from localStorage:', error);
       }
-    } catch (error) {
-      console.error('Error loading from localStorage:', error);
     }
   }, []);
 
@@ -578,14 +610,7 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
     
     // Add only current additional sections
     additionalSections.forEach((secIndex, arrayIndex) => {
-      // Check if section has data - either title, type, content, project data, or volunteer data
-      const hasData = data[`additionalSectionTitle_${secIndex}`] || 
-                      data[`additionalSectionType_${secIndex}`] ||
-                      data[`additionalSectionContent_${secIndex}`] ||
-                      data[`projectName_${secIndex}_0`] ||
-                      data[`volunteerOrg_${secIndex}`];
-      
-      if (hasData) {
+      if (data[`additionalSectionTitle_${secIndex}`] || data[`additionalSectionType_${secIndex}`]) {
         cleanedData[`additionalSectionType_${arrayIndex}`] = data[`additionalSectionType_${secIndex}`];
         cleanedData[`additionalSectionTitle_${arrayIndex}`] = data[`additionalSectionTitle_${secIndex}`];
         cleanedData[`additionalSectionContent_${arrayIndex}`] = data[`additionalSectionContent_${secIndex}`];
@@ -600,12 +625,51 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
         if (data[`volunteerOrg_${secIndex}`]) {
           cleanedData[`volunteerOrg_${arrayIndex}`] = data[`volunteerOrg_${secIndex}`];
           cleanedData[`volunteerYear_${arrayIndex}`] = data[`volunteerYear_${secIndex}`];
+          cleanedData[`volunteerDescription_${arrayIndex}`] = data[`volunteerDescription_${secIndex}`];
         }
       }
     });
     
     console.log('Form onSubmit - cleaned data:', cleanedData);
+    
+    // Save to Firestore if user is authenticated
+    if (currentUser) {
+      const resumeName = cleanedData.fullName 
+        ? `${cleanedData.fullName}'s Resume` 
+        : 'My Resume';
+      
+      // Check if we're updating an existing resume or creating a new one
+      if (currentResumeId) {
+        // Update existing resume
+        console.log('Updating existing resume to account:', currentResumeId);
+        updateResume(currentUser.uid, currentResumeId, cleanedData, resumeName)
+          .then(({ success, error }) => {
+            if (error) {
+              console.error('Error updating resume to Firestore:', error);
+              alert('Failed to update resume to cloud. Your changes will be stored locally.');
+            } else {
+              console.log('✅ Resume updated in Firestore:', currentResumeId);
+            }
+          });
+      } else {
+        // Create new resume
+        console.log('Saving new resume to account');
+        saveResume(currentUser.uid, cleanedData, resumeName)
+          .then(({ success, resumeId, error }) => {
+            if (error) {
+              console.error('Error saving resume to Firestore:', error);
+              alert('Failed to save resume to cloud. Your resume will be stored locally.');
+            } else {
+              console.log('✅ Resume saved to Firestore:', resumeId);
+            }
+          });
+      }
+    } else {
+      console.log('⚠️ User not logged in - resume will NOT be saved to account');
+    }
+    
     onFormSubmit(cleanedData);
+    navigate('/preview');
   };
 
   return (
@@ -617,11 +681,21 @@ const FormPage = ({ onFormSubmit, onBack, existingData }) => {
       
       <div className="form-container">
         <div className="form-header">
-          <button className="back-button" onClick={onBack}>
+          <button className="back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
           <h1>Tell Us About Yourself</h1>
           <p>Fill in your details to create your professional resume</p>
+          
+          {/* Show info message if user is not logged in */}
+          {!currentUser && (
+            <div className="guest-info-banner">
+              <AlertCircle size={16} />
+              <span>
+                You're creating as a guest. <a href="/signup" style={{ color: '#16a34a', fontWeight: '600' }}>Sign up</a> to save your resume to your account.
+              </span>
+            </div>
+          )}
           
           {/* Progress and Auto-save indicators */}
           <div className="header-indicators">
