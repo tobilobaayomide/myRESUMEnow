@@ -446,6 +446,45 @@
   margin-bottom: 0.2rem;
 }
 
+/* Skills Content - Rich Text Editor Output */
+.skills-content {
+  font-size: 10pt !important;
+  color: #000;
+  line-height: 1.6 !important;
+  text-align: justify;
+}
+
+.skills-content b,
+.skills-content strong {
+  font-weight: bold !important;
+}
+
+.skills-content i,
+.skills-content em {
+  font-style: italic !important;
+}
+
+.skills-content u {
+  text-decoration: underline !important;
+}
+
+.skills-content ul {
+  margin: 0.3rem 0;
+  padding-left: 1.2rem;
+  list-style-type: disc;
+  text-align: left;
+}
+
+.skills-content li {
+  margin-bottom: 0.2rem;
+  line-height: 1.6 !important;
+  font-size: 10pt !important;
+}
+
+.skills-content p {
+  margin: 0 0 0.3rem 0;
+}
+
 @media print {
   /* Hide everything first */
   body * {

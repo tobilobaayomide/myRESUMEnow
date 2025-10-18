@@ -1111,6 +1111,52 @@
   transform: translateY(-1px);
 }
 
+.remove-btn {
+  background-color: #dc3545;
+  border: none;
+  color: var(--white);
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.remove-btn:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+.section-header-with-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header-with-toggle h2 {
+  margin: 0;
+}
+
+.collapse-toggle-btn {
+  background-color: #6c757d;
+  border: none;
+  color: var(--white);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.collapse-toggle-btn:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
 .section-type-select {
   width: 100%;
   padding: 0.75rem;

@@ -41,7 +41,7 @@ const SignupPage = () => {
       // Show success animation
       setShowSuccess(true);
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/login');
       }, 1000);
     }
   };
@@ -59,7 +59,7 @@ const SignupPage = () => {
       // Show success animation
       setShowSuccess(true);
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/login');
       }, 1000);
     }
   };

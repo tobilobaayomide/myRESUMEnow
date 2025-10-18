@@ -1,0 +1,89 @@
+.text-editor-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  overflow: hidden;
+}
+
+.text-editor-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.text-editor-toolbar .toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.text-editor-toolbar .toolbar-btn:hover {
+  background: #e5e7eb;
+  color: #16a34a;
+}
+
+.text-editor-toolbar .toolbar-btn:active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.text-editor-content {
+  min-height: 150px;
+  padding: 12px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  outline: none;
+  color: #1f2937;
+  font-family: inherit;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.text-editor-content:focus {
+  outline: none;
+}
+
+.text-editor-content:empty:before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* Formatting styles */
+.text-editor-content b,
+.text-editor-content strong {
+  font-weight: bold !important;
+}
+
+.text-editor-content i,
+.text-editor-content em {
+  font-style: italic !important;
+}
+
+.text-editor-content u {
+  text-decoration: underline !important;
+}
+
+.text-editor-content ul {
+  margin: 8px 0;
+  padding-left: 24px;
+  list-style-type: disc;
+}
+
+.text-editor-content li {
+  margin: 4px 0;
+}
+
+/* Ensure contentEditable preserves formatting */
+.text-editor-content * {
+  font-family: inherit;
+}

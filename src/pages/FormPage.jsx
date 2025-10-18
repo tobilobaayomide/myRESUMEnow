@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { saveResume, updateResume } from '../firebase/firestore';
 import { ArrowRight, User, Mail, Phone, MapPin, Briefcase, GraduationCap, Award, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
+import TextEditor from '../components/TextEditor';
 import './FormPage.css';
 
 const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
@@ -117,6 +118,12 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
   const [formProgress, setFormProgress] = useState(0);
   const [autoSaveStatus, setAutoSaveStatus] = useState('');
   const [formData, setFormData] = useState(existingData || {});
+  const [skillsContent, setSkillsContent] = useState(existingData?.skills || '');
+
+  // Register skills field
+  useEffect(() => {
+    register('skills', { required: 'Skills are required' });
+  }, [register]);
 
   // Reset form when existingData changes
   useEffect(() => {
@@ -131,6 +138,7 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
       setCurrentlyWorking(getInitialCurrentlyWorking(existingData));
       setCurrentlyStudying(getInitialCurrentlyStudying(existingData));
       setFormData(existingData);
+      setSkillsContent(existingData.skills || '');
     } else {
       // If existingData is null, clear the form completely
       console.log('No existingData - starting with clean slate');
@@ -279,6 +287,18 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
     'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara',
     'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau',
     'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
+  ];
+
+  const countries = [
+    'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 
+    'Belgium', 'Brazil', 'Canada', 'Chile', 'China', 'Colombia', 'Czech Republic', 'Denmark', 
+    'Egypt', 'Ethiopia', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'Hungary', 
+    'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Kenya', 
+    'Malaysia', 'Mexico', 'Morocco', 'Netherlands', 'New Zealand', 'Nigeria', 'Norway', 
+    'Pakistan', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Romania', 'Russia', 
+    'Saudi Arabia', 'Singapore', 'South Africa', 'South Korea', 'Spain', 'Sweden', 
+    'Switzerland', 'Tanzania', 'Thailand', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates',
+    'United Kingdom', 'United States', 'Vietnam', 'Zimbabwe'
   ];
 
   const addWorkExperience = () => {
@@ -592,7 +612,8 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
         cleanedData[`degree_${arrayIndex}`] = data[`degree_${eduIndex}`];
         cleanedData[`course_${arrayIndex}`] = data[`course_${eduIndex}`];
         cleanedData[`institution_${arrayIndex}`] = data[`institution_${eduIndex}`];
-        cleanedData[`educationLocation_${arrayIndex}`] = data[`educationLocation_${eduIndex}`];
+        cleanedData[`educationCity_${arrayIndex}`] = data[`educationCity_${eduIndex}`];
+        cleanedData[`educationCountry_${arrayIndex}`] = data[`educationCountry_${eduIndex}`];
         cleanedData[`educationStartMonth_${arrayIndex}`] = data[`educationStartMonth_${eduIndex}`];
         cleanedData[`educationStartYear_${arrayIndex}`] = data[`educationStartYear_${eduIndex}`];
         cleanedData[`educationEndMonth_${arrayIndex}`] = data[`educationEndMonth_${eduIndex}`];
@@ -610,23 +631,35 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
     
     // Add only current additional sections
     additionalSections.forEach((secIndex, arrayIndex) => {
+      console.log(`Processing additional section ${arrayIndex} (original index: ${secIndex})`);
+      console.log(`  Type: ${data[`additionalSectionType_${secIndex}`]}`);
+      console.log(`  Title: ${data[`additionalSectionTitle_${secIndex}`]}`);
+      console.log(`  Content: ${data[`additionalSectionContent_${secIndex}`]}`);
+      
       if (data[`additionalSectionTitle_${secIndex}`] || data[`additionalSectionType_${secIndex}`]) {
         cleanedData[`additionalSectionType_${arrayIndex}`] = data[`additionalSectionType_${secIndex}`];
         cleanedData[`additionalSectionTitle_${arrayIndex}`] = data[`additionalSectionTitle_${secIndex}`];
         cleanedData[`additionalSectionContent_${arrayIndex}`] = data[`additionalSectionContent_${secIndex}`];
+        
+        console.log(`  ✅ Added to cleanedData at index ${arrayIndex}`);
+        
         // Handle project data if it exists
         if (data[`projectName_${secIndex}_0`]) {
           cleanedData[`projectName_${arrayIndex}_0`] = data[`projectName_${secIndex}_0`];
           cleanedData[`projectDescription_${arrayIndex}_0`] = data[`projectDescription_${secIndex}_0`];
           cleanedData[`projectStack_${arrayIndex}_0`] = data[`projectStack_${secIndex}_0`];
           cleanedData[`projectUrl_${arrayIndex}_0`] = data[`projectUrl_${secIndex}_0`];
+          console.log(`  ✅ Added project data`);
         }
         // Handle volunteer data if it exists
         if (data[`volunteerOrg_${secIndex}`]) {
           cleanedData[`volunteerOrg_${arrayIndex}`] = data[`volunteerOrg_${secIndex}`];
           cleanedData[`volunteerYear_${arrayIndex}`] = data[`volunteerYear_${secIndex}`];
           cleanedData[`volunteerDescription_${arrayIndex}`] = data[`volunteerDescription_${secIndex}`];
+          console.log(`  ✅ Added volunteer data`);
         }
+      } else {
+        console.log(`  ⚠️ Skipping - no title or type found`);
       }
     });
     
@@ -803,6 +836,15 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
               </div>
 
               <div className="form-group">
+                <label>GitHub Profile</label>
+                <input
+                  type="url"
+                  {...register('github', )}
+                  placeholder="your GitHub URL"
+                />
+              </div>
+
+              <div className="form-group">
                 <label>Portfolio Website</label>
                 <input
                   type="url"
@@ -858,11 +900,11 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
                   </div>
 
                   <div className="form-group">
-                    <label>Company</label>
+                    <label>Company/Location</label>
                     <input
                       type="text"
                       {...register(`company_${expIndex}`, { required: 'Company is required' })}
-                      placeholder="your company name"
+                      placeholder="your company name, location, etc."
                     />
                     {errors[`company_${expIndex}`] && <span className="error">{errors[`company_${expIndex}`].message}</span>}
                   </div>
@@ -1031,19 +1073,29 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
                   </div>
 
                   <div className="form-group">
-                    <label>Location</label>
+                    <label>City</label>
+                    <input
+                      type="text"
+                      {...register(`educationCity_${eduIndex}`, { required: 'City is required' })}
+                      placeholder="e.g. Lagos, London, New York..."
+                    />
+                    {errors[`educationCity_${eduIndex}`] && <span className="error">{errors[`educationCity_${eduIndex}`].message}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Country</label>
                     <select
-                      {...register(`educationLocation_${eduIndex}`, { required: 'Location is required' })}
+                      {...register(`educationCountry_${eduIndex}`, { required: 'Country is required' })}
                       className="date-select"
                     >
-                      <option value="">Select State</option>
-                      {nigerianStates.map((state) => (
-                        <option key={state} value={state}>
-                          {state}
+                      <option value="">Select Country</option>
+                      {countries.map((country) => (
+                        <option key={country} value={country}>
+                          {country}
                         </option>
                       ))}
                     </select>
-                    {errors[`educationLocation_${eduIndex}`] && <span className="error">{errors[`educationLocation_${eduIndex}`].message}</span>}
+                    {errors[`educationCountry_${eduIndex}`] && <span className="error">{errors[`educationCountry_${eduIndex}`].message}</span>}
                   </div>
 
                   <div className="form-group">
@@ -1159,10 +1211,13 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
             <h2><Award size={20} /> Skills</h2>
             <div className="form-group">
               <label>Technical Skills</label>
-              <textarea
-                {...register('skills', { required: 'Skills are required' })}
-                placeholder="JavaScript, React, Node.js, Python, SQL, Git, AWS..."
-                rows="3"
+              <TextEditor
+                value={skillsContent}
+                onChange={(content) => {
+                  setSkillsContent(content);
+                  setValue('skills', content, { shouldValidate: true });
+                }}
+                placeholder="Type your skills here... Use the toolbar for bold and bullet lists."
               />
               {errors.skills && <span className="error">{errors.skills.message}</span>}
             </div>
@@ -1176,15 +1231,13 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
               <div key={certIndex} className="certification-item">
                 <div className="section-header">
                   <h3>Certification {index + 1}</h3>
-                  {certifications.length > 0 && (
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      onClick={() => removeCertification(index)}
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="remove-btn"
+                    onClick={() => removeCertification(index)}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
                 
                 <div className="form-grid">
@@ -1322,6 +1375,12 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
                     <span className="error">{errors[`additionalSectionType_${sectionIndex}`].message}</span>
                   )}
                 </div>
+
+                {/* Hidden field for non-custom sections to capture auto-populated title */}
+                <input
+                  type="hidden"
+                  {...register(`additionalSectionTitle_${sectionIndex}`)}
+                />
 
                 {/* Only show custom title input if custom section is selected */}
                 {document.querySelector(`select[name="additionalSectionType_${sectionIndex}"]`)?.value === 'custom' && (

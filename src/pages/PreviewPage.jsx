@@ -427,6 +427,13 @@ const PreviewPage = ({ resumeData }) => {
                   </a>
                 </div>
               )}
+              {resumeData.github && (
+                <div className="contact-item">
+                  <a href={resumeData.github.startsWith('http') ? resumeData.github : `https://${resumeData.github}`} target="_blank" rel="noopener noreferrer">
+                    GitHub
+                  </a>
+                </div>
+              )}
               {resumeData.portfolio && (
                 <div className="contact-item">
                   <a href={resumeData.portfolio.startsWith('http') ? resumeData.portfolio : `https://${resumeData.portfolio}`} target="_blank" rel="noopener noreferrer">
@@ -449,37 +456,15 @@ const PreviewPage = ({ resumeData }) => {
       case 'skills':
         if (!resumeData.skills) return null;
         
-        // Check if skills contain line breaks (listed format)
-        const hasLineBreaks = resumeData.skills.includes('\n');
-        
-        if (hasLineBreaks) {
-          // Display as bulleted list
-          const skillLines = resumeData.skills.split('\n').filter(line => line.trim());
-          return (
-            <div key="skills" className="resume-section">
-              <h3 className="section-title">Technical Skills</h3>
-              <ul className="skills-list-bulleted">
-                {skillLines.map((skill, index) => (
-                  <li key={index}>{skill.trim()}</li>
-                ))}
-              </ul>
-            </div>
-          );
-        } else {
-          // Display inline with commas
-          return (
-            <div key="skills" className="resume-section">
-              <h3 className="section-title">Technical Skills</h3>
-              <div className="skills-list">
-                {resumeData.skills?.split(',').map((skill, index) => (
-                  <span key={index} className="skill-item">
-                    {skill.trim()}
-                  </span>
-                ))}
-              </div>
-            </div>
-          );
-        }
+        return (
+          <div key="skills" className="resume-section">
+            <h3 className="section-title">Technical Skills</h3>
+            <div 
+              className="skills-content"
+              dangerouslySetInnerHTML={{ __html: resumeData.skills }}
+            />
+          </div>
+        );
       
       case 'experience':
         const workExperiences = getWorkExperiences();
@@ -526,7 +511,10 @@ const PreviewPage = ({ resumeData }) => {
                   </h4>
                   <span className="institution">
                     {education.institution}
-                    {education.location && `, ${education.location}, Nigeria.`}
+                    {(education.city || education.country) && ', '}
+                    {education.city && `${education.city}`}
+                    {education.city && education.country && ', '}
+                    {education.country && `${education.country}.`}
                   </span>
                 </div>
                 <span className="graduation-year">
@@ -632,7 +620,8 @@ const PreviewPage = ({ resumeData }) => {
         degree: resumeData[`degree_${index}`],
         course: resumeData[`course_${index}`],
         institution: resumeData[`institution_${index}`],
-        location: resumeData[`educationLocation_${index}`],
+        city: resumeData[`educationCity_${index}`],
+        country: resumeData[`educationCountry_${index}`],
         startMonth: getShortMonth(resumeData[`educationStartMonth_${index}`]),
         startYear: resumeData[`educationStartYear_${index}`],
         endMonth: getShortMonth(resumeData[`educationEndMonth_${index}`]),
@@ -951,6 +940,13 @@ const PreviewPage = ({ resumeData }) => {
                 </a>
               </div>
             )}
+            {resumeData.github && (
+              <div className="contact-item">
+                <a href={resumeData.github.startsWith('http') ? resumeData.github : `https://${resumeData.github}`} target="_blank" rel="noopener noreferrer">
+                  GitHub
+                </a>
+              </div>
+            )}
             {resumeData.portfolio && (
               <div className="contact-item">
                 <a href={resumeData.portfolio.startsWith('http') ? resumeData.portfolio : `https://${resumeData.portfolio}`} target="_blank" rel="noopener noreferrer">
@@ -970,34 +966,15 @@ const PreviewPage = ({ resumeData }) => {
         )}
 
         {/* Skills */}
-        {resumeData.skills && (() => {
-          const hasLineBreaks = resumeData.skills.includes('\n');
-          
-          if (hasLineBreaks) {
-            const skillLines = resumeData.skills.split('\n').filter(line => line.trim());
-            return (
-              <div className="resume-section">
-                <h3 className="section-title">Technical Skills</h3>
-                <ul className="skills-list-bulleted">
-                  {skillLines.map((skill, index) => (
-                    <li key={index}>{skill.trim()}</li>
-                  ))}
-                </ul>
-              </div>
-            );
-          } else {
-            return (
-              <div className="resume-section">
-                <h3 className="section-title">Technical Skills</h3>
-                <div className="skills-list">
-                  {resumeData.skills?.split(',').map((skill, index) => (
-                    <span key={index} className="skill-item">{skill.trim()}</span>
-                  ))}
-                </div>
-              </div>
-            );
-          }
-        })()}
+        {resumeData.skills && (
+          <div className="resume-section">
+            <h3 className="section-title">Technical Skills</h3>
+            <div 
+              className="skills-content"
+              dangerouslySetInnerHTML={{ __html: resumeData.skills }}
+            />
+          </div>
+        )}
 
         {/* Work Experience - ALL experiences */}
         {workExperiences.length > 0 && (
@@ -1042,7 +1019,10 @@ const PreviewPage = ({ resumeData }) => {
                   </h4>
                   <span className="institution">
                     {education.institution}
-                    {education.location && `, ${education.location}, Nigeria.`}
+                    {(education.city || education.country) && ', '}
+                    {education.city && `${education.city}`}
+                    {education.city && education.country && ', '}
+                    {education.country && `${education.country}.`}
                   </span>
                 </div>
                 <span className="graduation-year">

@@ -50,7 +50,7 @@ const Navbar = () => {
         <div className="nav-links">
           <button onClick={() => navigate('/')} className="nav-link">Home</button>
           <button onClick={handleAboutClick} className="nav-link">About</button>
-          <button onClick={() => navigate('/contact')} className="nav-link">Contact</button>
+          <button onClick={() => navigate('/templates')} className="nav-link">Templates</button>
         </div>
 
         {/* Desktop Auth Buttons */}
