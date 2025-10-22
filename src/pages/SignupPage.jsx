@@ -83,7 +83,12 @@ const SignupPage = () => {
             <div className="success-checkmark">
               <CheckCircle size={60} />
             </div>
-            <p>Finalizing signup...</p>
+            <p>
+              Account created! Please verify your email to activate your account.<br />
+              <span style={{ fontSize: '0.95em', color: '#666' }}>
+                If you don&apos;t see the email, check your spam or junk folder.
+              </span>
+            </p>
           </div>
         </div>
       </div>
