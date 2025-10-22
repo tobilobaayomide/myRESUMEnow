@@ -37,6 +37,12 @@ const LoginPage = () => {
       }
       setError(friendlyMessage);
       setLoading(false);
+    } else if (user && !user.emailVerified) {
+      // Block unverified users
+      setError('Please verify your email before logging in.');
+      setLoading(false);
+      // Sign out the user
+      import('../firebase/auth').then(({ logOut }) => logOut());
     } else {
       // Store remember me preference
       if (rememberMe) {
