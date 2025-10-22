@@ -21,7 +21,21 @@ const LoginPage = () => {
     const { user, error: signInError } = await signIn(email, password);
 
     if (signInError) {
-      setError(signInError);
+      let friendlyMessage = signInError;
+      if (signInError.includes('auth/user-not-found')) {
+        friendlyMessage = 'No account found with this email.';
+      } else if (signInError.includes('auth/wrong-password')) {
+        friendlyMessage = 'Incorrect password. Please try again.';
+      } else if (signInError.includes('auth/invalid-email')) {
+        friendlyMessage = 'Invalid email address format.';
+      } else if (signInError.includes('auth/invalid-credential')) {
+        friendlyMessage = 'Invalid email or password.';
+      } else if (signInError.includes('auth/too-many-requests')) {
+        friendlyMessage = 'Too many failed attempts. Please try again later or reset your password.';
+      } else if (signInError.includes('auth/user-disabled')) {
+        friendlyMessage = 'This account has been disabled.';
+      }
+      setError(friendlyMessage);
       setLoading(false);
     } else {
       // Store remember me preference
@@ -30,7 +44,6 @@ const LoginPage = () => {
       } else {
         localStorage.removeItem('rememberMe');
       }
-      
       navigate('/dashboard');
     }
   };
