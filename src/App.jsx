@@ -11,40 +11,55 @@ import DashboardPage from './pages/DashboardPage'
 import { parseResumeFile } from './utils/resumeParser'
 import './App.css'
 
+
 function App() {
   console.log('🚀 App component rendering');
-  const [resumeData, setResumeData] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [resumeData, setResumeData] = useState(null);
+  const [resumeId, setResumeId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleUploadResume = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
+    const file = event.target.files[0];
+    if (!file) return;
 
-    console.log('File selected:', file.name, file.type)
-    setIsLoading(true)
+    console.log('File selected:', file.name, file.type);
+    setIsLoading(true);
     try {
-      const extractedData = await parseResumeFile(file)
-      console.log('Extracted data:', extractedData)
-      setResumeData(extractedData)
+      const extractedData = await parseResumeFile(file);
+      console.log('Extracted data:', extractedData);
+      setResumeData(extractedData);
+      setResumeId(null); // New upload, not editing
     } catch (error) {
-      console.error('Error parsing resume:', error)
-      alert('Failed to parse resume. Please try a different format or create a new resume.')
+      console.error('Error parsing resume:', error);
+      alert('Failed to parse resume. Please try a different format or create a new resume.');
     } finally {
-      setIsLoading(false)
-      event.target.value = ''
+      setIsLoading(false);
+      event.target.value = '';
     }
-  }
+  };
 
   const handleFormSubmit = (data) => {
-    const newData = { ...data, _timestamp: Date.now() }
-    setResumeData(newData)
-  }
+    const newData = { ...data, _timestamp: Date.now() };
+    setResumeData(newData);
+  };
+
+  // Accepts both data and id for editing
+  const handleLoadResume = (data, id) => {
+    setResumeData(data);
+    setResumeId(id || null);
+  };
+
+  // Cleanup function to clear resume data on logout
+  const handleLogoutCleanup = () => {
+    setResumeData(null);
+    setResumeId(null);
+  };
 
   return (
     <AuthProvider>
       <Router>
         <div className="app">
-          <Navbar />
+          <Navbar onLogoutCleanup={handleLogoutCleanup} />
           {isLoading && (
             <div className="loading-overlay">
               <div className="loading-spinner">
@@ -56,18 +71,18 @@ function App() {
           <main className="main-content">
             <Routes>
               <Route path="/" element={<LandingPage onUploadResume={handleUploadResume} />} />
-              <Route path="/form" element={<FormPage onFormSubmit={handleFormSubmit} existingData={resumeData} />} />
+              <Route path="/form" element={<FormPage onFormSubmit={handleFormSubmit} existingData={resumeData} resumeId={resumeId} />} />
               <Route path="/preview" element={<PreviewPage key={resumeData?._timestamp} resumeData={resumeData} />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
-              <Route path="/dashboard" element={<DashboardPage onUploadResume={handleUploadResume} />} />
+              <Route path="/dashboard" element={<DashboardPage onUploadResume={handleUploadResume} onLoadResume={handleLoadResume} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </main>
         </div>
       </Router>
     </AuthProvider>
-  )
+  );
 }
 
 export default App

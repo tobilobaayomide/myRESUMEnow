@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { logOut } from '../firebase/auth';
 import { User, LogIn, FileText, Menu, X, LayoutDashboard, LogOut } from 'lucide-react';
 
-const Navbar = () => {
+const Navbar = ({ onLogoutCleanup }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -33,6 +33,7 @@ const Navbar = () => {
       console.error('Error logging out:', error);
       alert('Failed to logout. Please try again.');
     } else {
+      if (onLogoutCleanup) onLogoutCleanup();
       navigate('/');
       setIsMobileMenuOpen(false);
     }

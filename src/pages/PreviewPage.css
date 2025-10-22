@@ -468,11 +468,19 @@
   text-decoration: underline !important;
 }
 
-.skills-content ul {
+.skills-content ul,
+.skills-content ol {
   margin: 0.3rem 0;
   padding-left: 1.2rem;
-  list-style-type: disc;
   text-align: left;
+}
+
+.skills-content ul {
+  list-style-type: disc;
+}
+
+.skills-content ol {
+  list-style-type: decimal;
 }
 
 .skills-content li {

@@ -449,7 +449,10 @@ const PreviewPage = ({ resumeData }) => {
         return resumeData.summary ? (
           <div key="summary" className="resume-section">
             <h3 className="section-title">Professional Summary</h3>
-            <p className="summary-text">{resumeData.summary}</p>
+            <div
+              className="summary-text"
+              dangerouslySetInnerHTML={{ __html: resumeData.summary }}
+            />
           </div>
         ) : null;
       
@@ -487,11 +490,10 @@ const PreviewPage = ({ resumeData }) => {
                       : `${experience.endMonth} ${experience.endYear}`}
                   </span>
                 </div>
-                <ul className="job-responsibilities">
-                  {experience.description?.split('\n').map((line, lineIndex) => (
-                    line.trim() && <li key={lineIndex}>{line.trim()}</li>
-                  ))}
-                </ul>
+                <div
+                  className="job-responsibilities"
+                  dangerouslySetInnerHTML={{ __html: experience.description || '' }}
+                />
               </div>
             ))}
           </div>
@@ -546,22 +548,28 @@ const PreviewPage = ({ resumeData }) => {
       
       case 'additional':
         const { data: groupedSection } = section;
+        // Publications and Volunteering: block format
+        if (groupedSection.type === 'publications' || groupedSection.type === 'volunteer') {
+          return (
+            <div key={`additional-${groupedSection.title}`} className="resume-section">
+              <h3 className="section-title">{groupedSection.title}</h3>
+              <div className="projects-section">
+                {formatSectionContent(groupedSection).map((item, itemIndex) => (
+                  <div key={itemIndex} className={groupedSection.type === 'publications' ? 'publication-item-inline' : 'volunteer-item-inline'}>{item}</div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+        // Other types: list format
         return (
           <div key={`additional-${groupedSection.title}`} className="resume-section">
             <h3 className="section-title">{groupedSection.title}</h3>
-            {groupedSection.type === 'projects' ? (
-              <div className="projects-section">
-                {formatSectionContent(groupedSection).map((item, itemIndex) => (
-                  <div key={itemIndex}>{item}</div>
-                ))}
-              </div>
-            ) : (
-              <ul className="additional-section-list">
-                {formatSectionContent(groupedSection).map((item, itemIndex) => (
-                  <li key={itemIndex}>{item}</li>
-                ))}
-              </ul>
-            )}
+            <ul className="additional-section-list">
+              {formatSectionContent(groupedSection).map((item, itemIndex) => (
+                <li key={itemIndex}>{item}</li>
+              ))}
+            </ul>
           </div>
         );
       
@@ -689,6 +697,17 @@ const PreviewPage = ({ resumeData }) => {
         // Only add if there's actual volunteer data
         if (volunteerData.organization || section.content) {
           section.volunteerData = volunteerData;
+          allSections.push(section);
+        }
+      } else if (section.type === 'publications') {
+        // Handle structured publication data
+        const publicationData = {
+          year: resumeData[`publicationYear_${index}`]
+        };
+        if (publicationData.year) {
+          section.publicationData = publicationData;
+        }
+        if (section.content || section.title || publicationData.year) {
           allSections.push(section);
         }
       } else if (section.content || section.title) {
@@ -826,10 +845,29 @@ const PreviewPage = ({ resumeData }) => {
     }
     
     items.forEach(section => {
+      // Publications: show year at far end, bold title and year, no bullet
+      if (type === 'publications') {
+        const year = section.publicationData?.year;
+        if (section.content) {
+          const lines = section.content.split('\n').filter(line => line.trim());
+          lines.forEach(line => {
+            const contentKey = `${section.index}-${line}`;
+            if (!addedContent.has(contentKey)) {
+              addedContent.add(contentKey);
+              const parts = line.split(' - ');
+              allContent.push(
+                <div key={contentKey} style={{ display: 'flex', alignItems: 'center', fontWeight: 'bold', marginBottom: '4px' }}>
+                  <span style={{ flex: 1 }}>{parts[0].trim()}</span>
+                  {year && <span style={{ fontWeight: 'bold', marginLeft: '12px' }}>{year}</span>}
+                </div>
+              );
+            }
+          });
+        }
+        return;
+      }
       if (!section.content) return;
-      
       const lines = section.content.split('\n').filter(line => line.trim());
-      
       switch (type) {
         case 'languages':
           lines.forEach(line => {
@@ -844,7 +882,6 @@ const PreviewPage = ({ resumeData }) => {
             }
           });
           break;
-        
         case 'awards':
           lines.forEach(line => {
             const contentKey = `${section.index}-${line}`;
@@ -859,22 +896,6 @@ const PreviewPage = ({ resumeData }) => {
             }
           });
           break;
-        
-        case 'publications':
-          lines.forEach(line => {
-            const contentKey = `${section.index}-${line}`;
-            if (!addedContent.has(contentKey)) {
-              addedContent.add(contentKey);
-              const parts = line.split(' - ');
-              if (parts.length >= 2) {
-                allContent.push(<span key={contentKey}><strong>{parts[0].trim()}</strong> - <em>{parts.slice(1).join(' - ')}</em></span>);
-              } else {
-                allContent.push(line.trim());
-              }
-            }
-          });
-          break;
-        
         default:
           lines.forEach(line => {
             const contentKey = `${section.index}-${line}`;
@@ -961,7 +982,10 @@ const PreviewPage = ({ resumeData }) => {
         {resumeData.summary && (
           <div className="resume-section">
             <h3 className="section-title">Professional Summary</h3>
-            <p className="summary-text">{resumeData.summary}</p>
+            <div
+              className="summary-text"
+              dangerouslySetInnerHTML={{ __html: resumeData.summary }}
+            />
           </div>
         )}
 
@@ -996,11 +1020,10 @@ const PreviewPage = ({ resumeData }) => {
                       : `${experience.endMonth} ${experience.endYear}`}
                   </span>
                 </div>
-                <ul className="job-responsibilities">
-                  {experience.description?.split('\n').map((line, lineIndex) => (
-                    line.trim() && <li key={lineIndex}>{line.trim()}</li>
-                  ))}
-                </ul>
+                <div
+                  className="job-responsibilities"
+                  dangerouslySetInnerHTML={{ __html: experience.description || '' }}
+                />
               </div>
             ))}
           </div>
@@ -1057,10 +1080,22 @@ const PreviewPage = ({ resumeData }) => {
         {additionalSections.length > 0 && additionalSections.map((groupedSection, index) => (
           <div key={index} className="resume-section">
             <h3 className="section-title">{groupedSection.title}</h3>
-            {groupedSection.type === 'projects' || groupedSection.type === 'volunteer' ? (
+            {groupedSection.type === 'projects' ? (
               <div className="projects-section">
                 {formatSectionContent(groupedSection).map((item, itemIndex) => (
                   <div key={itemIndex}>{item}</div>
+                ))}
+              </div>
+            ) : groupedSection.type === 'publications' ? (
+              <div className="projects-section">
+                {formatSectionContent(groupedSection).map((item, itemIndex) => (
+                  <>{item}</>
+                ))}
+              </div>
+            ) : groupedSection.type === 'volunteer' ? (
+              <div className="projects-section">
+                {formatSectionContent(groupedSection).map((item, itemIndex) => (
+                  <div key={itemIndex} className="volunteer-item-inline">{item}</div>
                 ))}
               </div>
             ) : (

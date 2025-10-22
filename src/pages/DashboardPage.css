@@ -314,10 +314,12 @@
 }
 
 .resume-card-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: row;
   gap: 0.5rem;
   margin-top: auto;
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
 .resume-action-btn {

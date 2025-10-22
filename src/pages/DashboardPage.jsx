@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getAllResumes, deleteResume, duplicateResume } from '../firebase/firestore';
+import { getAllResumes, deleteResume, duplicateResume, getResume } from '../firebase/firestore';
 import { parseResumeFile } from '../utils/resumeParser';
 import { FileText, Plus, Edit, Trash2, Copy, Loader, Upload } from 'lucide-react';
 import './DashboardPage.css';
 
-const DashboardPage = ({ onUploadResume }) => {
+const DashboardPage = ({ onUploadResume, onLoadResume }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [resumes, setResumes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoadingResume, setIsLoadingResume] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -58,6 +59,40 @@ const DashboardPage = ({ onUploadResume }) => {
       console.error('Error duplicating resume:', dupError);
     } else {
       setResumes([duplicatedResume, ...resumes]);
+    }
+  };
+
+  const handleViewResume = async (resumeId) => {
+    setIsLoadingResume(true);
+    const { resume, error: loadError } = await getResume(currentUser.uid, resumeId);
+    
+    if (loadError) {
+      setError('Failed to load resume');
+      console.error('Error loading resume:', loadError);
+      setIsLoadingResume(false);
+    } else {
+      if (onLoadResume) {
+        onLoadResume(resume.data);
+      }
+      setIsLoadingResume(false);
+      navigate('/preview');
+    }
+  };
+
+  const handleEditResume = async (resumeId) => {
+    setIsLoadingResume(true);
+    const { resume, error: loadError } = await getResume(currentUser.uid, resumeId);
+    
+    if (loadError) {
+      setError('Failed to load resume');
+      console.error('Error loading resume:', loadError);
+      setIsLoadingResume(false);
+    } else {
+      if (onLoadResume) {
+        onLoadResume(resume.data, resume.id); // Pass both data and id
+      }
+      setIsLoadingResume(false);
+      navigate('/form');
     }
   };
 
@@ -128,6 +163,13 @@ const DashboardPage = ({ onUploadResume }) => {
           <div className="dashboard-error">
             <p>{error}</p>
             <button onClick={() => setError('')}>Dismiss</button>
+          </div>
+        )}
+
+        {isLoadingResume && (
+          <div className="dashboard-loading">
+            <Loader className="spinner" size={32} />
+            <p>Loading resume...</p>
           </div>
         )}
 
@@ -205,9 +247,8 @@ const DashboardPage = ({ onUploadResume }) => {
                   <div className="resume-card-actions">
                     <button 
                       className="resume-action-btn view-btn"
-                      onClick={() => {
-                        console.log('View resume:', resume.id);
-                      }}
+                      onClick={() => handleViewResume(resume.id)}
+                      disabled={isLoadingResume}
                       title="View Resume"
                     >
                       <FileText size={16} />
@@ -215,21 +256,12 @@ const DashboardPage = ({ onUploadResume }) => {
                     </button>
                     <button 
                       className="resume-action-btn edit-btn"
-                      onClick={() => {
-                        console.log('Edit resume:', resume.id);
-                      }}
+                      onClick={() => handleEditResume(resume.id)}
+                      disabled={isLoadingResume}
                       title="Edit Resume"
                     >
                       <Edit size={16} />
                       Edit
-                    </button>
-                    <button 
-                      className="resume-action-btn duplicate-btn"
-                      onClick={() => handleDuplicate(resume.id)}
-                      title="Duplicate Resume"
-                    >
-                      <Copy size={16} />
-                      Copy
                     </button>
                     <button 
                       className="resume-action-btn delete-btn"

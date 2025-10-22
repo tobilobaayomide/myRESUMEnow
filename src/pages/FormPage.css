@@ -224,6 +224,7 @@
 .form-group textarea::placeholder {
   color: #9ca3af;
   font-style: italic;
+  font-size: 0.8em;
 }
 
 /* Override browser autofill styling */

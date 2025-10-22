@@ -72,11 +72,7 @@ const SignupPage = () => {
       setError(signInError);
       setLoading(false);
     } else {
-      // Show success animation
-      setShowSuccess(true);
-      setTimeout(() => {
-        navigate('/login');
-      }, 1000);
+      navigate('/dashboard');
     }
   };
 

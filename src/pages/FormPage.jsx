@@ -2,11 +2,39 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { saveResume } from '../firebase/firestore';
+import { saveResume, updateResume } from '../firebase/firestore';
 import { ArrowRight, User, Mail, Phone, MapPin, Briefcase, GraduationCap, Award, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
+import TextEditor from '../components/TextEditor';
 import './FormPage.css';
 
-const FormPage = ({ onFormSubmit, existingData }) => {
+const countryList = [
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
+  "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+  "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
+  "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+  "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
+  "Fiji", "Finland", "France",
+  "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
+  "Haiti", "Honduras", "Hungary",
+  "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
+  "Jamaica", "Japan", "Jordan",
+  "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan",
+  "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+  "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar (Burma)",
+  "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway",
+  "Oman",
+  "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
+  "Qatar",
+  "Romania", "Russia", "Rwanda",
+  "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
+  "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
+  "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan",
+  "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
+  "Yemen",
+  "Zambia", "Zimbabwe"
+];
+
+const FormPage = ({ onFormSubmit, existingData, resumeId }) => {
   console.log('🎯 FormPage component is rendering');
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -132,8 +160,9 @@ const FormPage = ({ onFormSubmit, existingData }) => {
     }
   }, [existingData, reset]);
 
-  // Auto-save functionality (#1)
+  // Auto-save functionality (#1) - only for signed-in users
   useEffect(() => {
+    if (!currentUser) return;
     const saveToLocalStorage = () => {
       try {
         localStorage.setItem('resumeFormData', JSON.stringify(formData));
@@ -151,10 +180,21 @@ const FormPage = ({ onFormSubmit, existingData }) => {
     }, 1000);
 
     return () => clearTimeout(debounceTimer);
-  }, [formData]);
+  }, [formData, currentUser]);
 
-  // Load saved data on mount
+  // Load saved data on mount, but only for signed-in users
   useEffect(() => {
+    if (!currentUser) {
+      // If not signed in, clear any local saved data
+      localStorage.removeItem('resumeFormData');
+      reset({});
+      setFormData({});
+      setWorkExperiences([0]);
+      setEducations([0]);
+      setCertifications([]);
+      setAdditionalSections([]);
+      return;
+    }
     try {
       const saved = localStorage.getItem('resumeFormData');
       if (saved && !existingData) {
@@ -169,7 +209,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
     } catch (error) {
       console.error('Error loading from localStorage:', error);
     }
-  }, []);
+  }, [currentUser]);
 
   // Calculate form progress (#4)
   useEffect(() => {
@@ -381,7 +421,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
               <label>Languages (one per line with proficiency)</label>
               <textarea
                 {...register(`additionalSectionContent_${sectionIndex}`, { required: 'Languages are required' })}
-                placeholder="English - Native&#10;Spanish - Fluent&#10;French - Intermediate&#10;German - Basic"
+                placeholder="ENGLISH - NATIVE&#10;SPANISH - FLUENT&#10;FRENCH - INTERMEDIATE&#10;GERMAN - BASIC"
                 rows="4"
               />
               {errors[`additionalSectionContent_${sectionIndex}`] && (
@@ -403,7 +443,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                   <input
                     type="text"
                     {...register(`projectName_${sectionIndex}_0`)}
-                    placeholder="E-commerce Website"
+                    placeholder="E-COMMERCE WEBSITE"
                   />
                 </div>
                 
@@ -411,7 +451,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                   <label>Description</label>
                   <textarea
                     {...register(`projectDescription_${sectionIndex}_0`)}
-                    placeholder="Built a full-stack e-commerce platform with user authentication, payment processing, and inventory management"
+                    placeholder="BUILT A FULL-STACK E-COMMERCE PLATFORM WITH USER AUTHENTICATION, PAYMENT PROCESSING, AND INVENTORY MANAGEMENT"
                     rows="2"
                   />
                 </div>
@@ -421,7 +461,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                   <input
                     type="text"
                     {...register(`projectStack_${sectionIndex}_0`)}
-                    placeholder="React, Node.js, MongoDB, Express, Stripe API"
+                    placeholder="REACT, NODE.JS, MONGODB, EXPRESS, STRIPE API"
                   />
                 </div>
                 
@@ -430,7 +470,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                   <input
                     type="url"
                     {...register(`projectUrl_${sectionIndex}_0`)}
-                    placeholder="https://github.com/username/project or https://project-demo.com"
+                    placeholder="HTTPS://GITHUB.COM/USERNAME/PROJECT OR HTTPS://PROJECT-DEMO.COM"
                   />
                 </div>
               </div>
@@ -446,7 +486,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
               <label>Awards & Achievements</label>
               <textarea
                 {...register(`additionalSectionContent_${sectionIndex}`, { required: 'Awards are required' })}
-                placeholder="Employee of the Year 2023 - ABC Company&#10;Dean's List - University Name (2022)&#10;Best Innovation Award - Tech Conference 2021"
+                placeholder="EMPLOYEE OF THE YEAR 2023 - ABC COMPANY&#10;DEAN'S LIST - UNIVERSITY NAME (2022)&#10;BEST INNOVATION AWARD - TECH CONFERENCE 2021"
                 rows="4"
               />
               {errors[`additionalSectionContent_${sectionIndex}`] && (
@@ -468,7 +508,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                   <input
                     type="text"
                     {...register(`volunteerOrg_${sectionIndex}`, { required: 'Organization name is required' })}
-                    placeholder="Community Food Bank"
+                    placeholder="COMMUNITY FOOD BANK"
                   />
                   {errors[`volunteerOrg_${sectionIndex}`] && (
                     <span className="error">{errors[`volunteerOrg_${sectionIndex}`].message}</span>
@@ -501,16 +541,31 @@ const FormPage = ({ onFormSubmit, existingData }) => {
         return (
           <div className="section-specific-fields">
             <div className="form-group">
-              <label>Publications</label>
+              <label>Publication Title</label>
               <textarea
                 {...register(`additionalSectionContent_${sectionIndex}`, { required: 'Publications are required' })}
-                placeholder="Research Paper Title (2023) - Journal Name&#10;Conference Presentation: Topic Title - Conference Name (2022)&#10;Blog Post: Article Title - Publication Platform (2021)"
+                placeholder="RESEARCH PAPER TITLE - JOURNAL NAME&#10;CONFERENCE PRESENTATION: TOPIC TITLE - CONFERENCE NAME&#10;BLOG POST: ARTICLE TITLE - PUBLICATION PLATFORM"
                 rows="4"
               />
               {errors[`additionalSectionContent_${sectionIndex}`] && (
                 <span className="error">{errors[`additionalSectionContent_${sectionIndex}`].message}</span>
               )}
-              <small className="form-hint">Include title, year, and publication venue</small>
+              <small className="form-hint">Include title and publication venue. Year is selected below.</small>
+            </div>
+            <div className="form-group">
+              <label>Year (Optional)</label>
+              <select
+                {...register(`publicationYear_${sectionIndex}`)}
+                className="date-select"
+              >
+                <option value="">Select Year</option>
+                {certificationYears.map(year => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+              <small className="form-hint">Select a year or leave blank</small>
             </div>
           </div>
         );
@@ -521,7 +576,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
             <label>Section Content</label>
             <textarea
               {...register(`additionalSectionContent_${sectionIndex}`, { required: 'Section content is required' })}
-              placeholder="Enter the content for this section. You can use bullet points or paragraphs..."
+              placeholder="ENTER THE CONTENT FOR THIS SECTION. YOU CAN USE BULLET POINTS OR PARAGRAPHS..."
               rows="4"
             />
             {errors[`additionalSectionContent_${sectionIndex}`] && (
@@ -567,7 +622,8 @@ const FormPage = ({ onFormSubmit, existingData }) => {
         cleanedData[`degree_${arrayIndex}`] = data[`degree_${eduIndex}`];
         cleanedData[`course_${arrayIndex}`] = data[`course_${eduIndex}`];
         cleanedData[`institution_${arrayIndex}`] = data[`institution_${eduIndex}`];
-        cleanedData[`educationLocation_${arrayIndex}`] = data[`educationLocation_${eduIndex}`];
+        cleanedData[`educationCountry_${arrayIndex}`] = data[`educationCountry_${eduIndex}`];
+        cleanedData[`educationCity_${arrayIndex}`] = data[`educationCity_${eduIndex}`];
         cleanedData[`educationStartMonth_${arrayIndex}`] = data[`educationStartMonth_${eduIndex}`];
         cleanedData[`educationStartYear_${arrayIndex}`] = data[`educationStartYear_${eduIndex}`];
         cleanedData[`educationEndMonth_${arrayIndex}`] = data[`educationEndMonth_${eduIndex}`];
@@ -602,26 +658,55 @@ const FormPage = ({ onFormSubmit, existingData }) => {
           cleanedData[`volunteerYear_${arrayIndex}`] = data[`volunteerYear_${secIndex}`];
           cleanedData[`volunteerDescription_${arrayIndex}`] = data[`volunteerDescription_${secIndex}`];
         }
+        // Handle publication year if it exists
+        if (data[`publicationYear_${secIndex}`]) {
+          cleanedData[`publicationYear_${arrayIndex}`] = data[`publicationYear_${secIndex}`];
+        }
       }
     });
     
     console.log('Form onSubmit - cleaned data:', cleanedData);
     
-    // Save to Firestore if user is authenticated
+    // Clean undefined and non-serializable values for Firestore
+    const safeData = {};
+    Object.entries(cleanedData).forEach(([key, value]) => {
+      if (value === undefined) {
+        safeData[key] = null;
+      } else if (typeof value === 'function') {
+        // skip functions
+      } else {
+        safeData[key] = value;
+      }
+    });
+
+    // Always update existing resume if resumeId is present and user is authenticated
     if (currentUser) {
-      const resumeName = cleanedData.fullName 
-        ? `${cleanedData.fullName}'s Resume` 
+      const resumeName = safeData.fullName 
+        ? `${safeData.fullName}'s Resume` 
         : 'My Resume';
-      
-      saveResume(currentUser.uid, cleanedData, resumeName)
-        .then(({ resume, error }) => {
-          if (error) {
-            console.error('Error saving resume to Firestore:', error);
-            alert('Failed to save resume to cloud. Your resume will be stored locally.');
-          } else {
-            console.log('Resume saved to Firestore:', resume?.id);
-          }
-        });
+      if (resumeId) {
+        // Always update existing resume (never create new)
+        updateResume(currentUser.uid, resumeId, safeData, resumeName)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Error updating resume in Firestore:', error);
+              alert('Failed to update resume in cloud. Your resume will be stored locally.');
+            } else {
+              console.log('Resume updated in Firestore:', resumeId);
+            }
+          });
+      } else {
+        // Create new resume only if not editing
+        saveResume(currentUser.uid, safeData, resumeName)
+          .then(({ resumeId: newResumeId, error }) => {
+            if (error) {
+              console.error('Error saving resume to Firestore:', error);
+              alert('Failed to save resume to cloud. Your resume will be stored locally.');
+            } else {
+              console.log('Resume saved to Firestore:', newResumeId);
+            }
+          });
+      }
     }
     
     onFormSubmit(cleanedData);
@@ -630,6 +715,12 @@ const FormPage = ({ onFormSubmit, existingData }) => {
 
   return (
     <div className="form-page">
+      {!currentUser && (
+        <div className="guest-warning" style={{background:'#fffbe6',border:'1px solid #ffe58f',padding:'1rem',marginBottom:'1rem',borderRadius:'6px',color:'#ad6800',fontWeight:'bold',textAlign:'center'}}>
+          You are creating a resume as a guest. <br />
+          <span style={{fontWeight:'normal'}}>Sign in to save your resume and access it later. Guest users cannot save data to the cloud.</span>
+        </div>
+      )}
       {/* Progress Bar */}
       <div className="form-progress">
         <div className="form-progress-bar" style={{ width: `${formProgress}%` }}></div>
@@ -637,7 +728,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
       
       <div className="form-container">
         <div className="form-header">
-          <button className="back-button" onClick={onBack}>
+          <button className="back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
           <h1>Tell Us About Yourself</h1>
@@ -675,7 +766,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                 <input
                   type="text"
                   {...register('fullName', { required: 'Full name is required' })}
-                  placeholder="your full name"
+                  placeholder="YOUR FULL NAME"
                 />
                 {errors.fullName && <span className="error">{errors.fullName.message}</span>}
               </div>
@@ -685,7 +776,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                 <input
                   type="text"
                   {...register('title', { required: 'Professional title is required' })}
-                  placeholder="your professional title"
+                  placeholder="YOUR PROFESSIONAL TITLE"
                 />
                 {errors.title && <span className="error">{errors.title.message}</span>}
               </div>
@@ -703,7 +794,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                         message: 'Please enter a valid email address'
                       }
                     })}
-                    placeholder="your email address"
+                    placeholder="YOUR EMAIL ADDRESS"
                   />
                   {!errors.email && formData.email?.trim() && (
                     <CheckCircle className="field-valid-icon" size={18} />
@@ -724,7 +815,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                 <input
                   type="tel"
                   {...register('phone', { required: 'Phone number is required' })}
-                  placeholder="your phone number"
+                  placeholder="YOUR PHONE NUMBER"
                 />
                 {errors.phone && <span className="error">{errors.phone.message}</span>}
               </div>
@@ -734,7 +825,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                 <input
                   type="text"
                   {...register('location', { required: 'Location is required' })}
-                  placeholder="your location"
+                  placeholder="YOUR LOCATION"
                 />
                 {errors.location && <span className="error">{errors.location.message}</span>}
               </div>
@@ -744,7 +835,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                 <input
                   type="url"
                   {...register('linkedin', )}
-                  placeholder="your LinkedIn URL"
+                  placeholder="YOUR LINKEDIN URL"
                 />
               </div>
 
@@ -753,7 +844,15 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                 <input
                   type="url"
                   {...register('portfolio', )}
-                  placeholder="your portfolio URL"
+                  placeholder="YOUR PORTFOLIO URL"
+                />
+              </div>
+              <div className="form-group">
+                <label>GitHub URL</label>
+                <input
+                  type="url"
+                  {...register('github')}
+                  placeholder="YOUR GITHUB PROFILE URL"
                 />
               </div>
             </div>
@@ -764,10 +863,14 @@ const FormPage = ({ onFormSubmit, existingData }) => {
             <h2><Briefcase size={20} /> Professional Summary</h2>
             <div className="form-group">
               <label>About You</label>
-              <textarea
-                {...register('summary', { required: 'Professional summary is required' })}
-                placeholder="brief description of your professional background, skills, and career objectives..."
-                rows="4"
+              <TextEditor
+                value={formData.summary || ''}
+                onChange={value => {
+                  setValue('summary', value);
+                  setFormData(prev => ({ ...prev, summary: value }));
+                }}
+                placeholder="BRIEF DESCRIPTION OF YOUR PROFESSIONAL BACKGROUND, SKILLS, AND CAREER OBJECTIVES..."
+                placeholderStyle={{ fontSize: '0.8em' }}
               />
               {errors.summary && <span className="error">{errors.summary.message}</span>}
             </div>
@@ -798,7 +901,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                     <input
                       type="text"
                       {...register(`jobTitle_${expIndex}`, { required: 'Job title is required' })}
-                      placeholder="your job title"
+                      placeholder="YOUR JOB TITLE"
                     />
                     {errors[`jobTitle_${expIndex}`] && <span className="error">{errors[`jobTitle_${expIndex}`].message}</span>}
                   </div>
@@ -808,7 +911,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                     <input
                       type="text"
                       {...register(`company_${expIndex}`, { required: 'Company is required' })}
-                      placeholder="your company name"
+                      placeholder="YOUR COMPANY NAME"
                     />
                     {errors[`company_${expIndex}`] && <span className="error">{errors[`company_${expIndex}`].message}</span>}
                   </div>
@@ -906,10 +1009,14 @@ const FormPage = ({ onFormSubmit, existingData }) => {
 
                 <div className="form-group">
                   <label>Job Description</label>
-                  <textarea
-                    {...register(`jobDescription_${expIndex}`, { required: 'Job description is required' })}
-                    placeholder="your key responsibilities and achievements in this role..."
-                    rows="4"
+                  <TextEditor
+                    value={formData[`jobDescription_${expIndex}`] || ''}
+                    onChange={value => {
+                      setValue(`jobDescription_${expIndex}`, value);
+                      setFormData(prev => ({ ...prev, [`jobDescription_${expIndex}`]: value }));
+                    }}
+                    placeholder="YOUR KEY RESPONSIBILITIES AND ACHIEVEMENTS IN THIS ROLE..."
+                    placeholderStyle={{ fontSize: '0.8em' }}
                   />
                   {errors[`jobDescription_${expIndex}`] && <span className="error">{errors[`jobDescription_${expIndex}`].message}</span>}
                 </div>
@@ -951,7 +1058,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                     <input
                       type="text"
                       {...register(`degree_${eduIndex}`, { required: 'Degree is required' })}
-                      placeholder="your degree i.e bachelor of science/arts/engineering..."
+                      placeholder="YOUR DEGREE (E.G. BACHELOR OF SCIENCE/ARTS/ENGINEERING)"
                     />
                     {errors[`degree_${eduIndex}`] && <span className="error">{errors[`degree_${eduIndex}`].message}</span>}
                   </div>
@@ -961,7 +1068,7 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                     <input
                       type="text"
                       {...register(`course_${eduIndex}`, { required: 'Course is required' })}
-                      placeholder="your course or major e.g. Computer Science, Business Administration..."
+                      placeholder="YOUR COURSE OR MAJOR (E.G. COMPUTER SCIENCE, BUSINESS ADMINISTRATION)"
                     />
                     {errors[`course_${eduIndex}`] && <span className="error">{errors[`course_${eduIndex}`].message}</span>}
                   </div>
@@ -971,25 +1078,33 @@ const FormPage = ({ onFormSubmit, existingData }) => {
                     <input
                       type="text"
                       {...register(`institution_${eduIndex}`, { required: 'Institution is required' })}
-                      placeholder="your institution name"
+                      placeholder="YOUR INSTITUTION NAME"
                     />
                     {errors[`institution_${eduIndex}`] && <span className="error">{errors[`institution_${eduIndex}`].message}</span>}
                   </div>
 
                   <div className="form-group">
                     <label>Location</label>
-                    <select
-                      {...register(`educationLocation_${eduIndex}`, { required: 'Location is required' })}
-                      className="date-select"
-                    >
-                      <option value="">Select State</option>
-                      {nigerianStates.map((state) => (
-                        <option key={state} value={state}>
-                          {state}
-                        </option>
-                      ))}
-                    </select>
-                    {errors[`educationLocation_${eduIndex}`] && <span className="error">{errors[`educationLocation_${eduIndex}`].message}</span>}
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <input
+                        type="text"
+                        {...register(`educationCity_${eduIndex}`, { required: 'City is required' })}
+                        placeholder="ENTER CITY"
+                        style={{ minWidth: '120px' }}
+                      />
+                      <select
+                        {...register(`educationCountry_${eduIndex}`, { required: 'Country is required' })}
+                        className="date-select"
+                        style={{ minWidth: '120px' }}
+                      >
+                        <option value="">Select Country</option>
+                        {countryList.map((country) => (
+                          <option key={country} value={country}>{country}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {errors[`educationCity_${eduIndex}`] && <span className="error">{errors[`educationCity_${eduIndex}`].message}</span>}
+                    {errors[`educationCountry_${eduIndex}`] && <span className="error">{errors[`educationCountry_${eduIndex}`].message}</span>}
                   </div>
 
                   <div className="form-group">
@@ -1105,10 +1220,13 @@ const FormPage = ({ onFormSubmit, existingData }) => {
             <h2><Award size={20} /> Skills</h2>
             <div className="form-group">
               <label>Technical Skills</label>
-              <textarea
-                {...register('skills', { required: 'Skills are required' })}
+              <TextEditor
+                value={formData.skills || ''}
+                onChange={(value) => {
+                  setValue('skills', value);
+                  setFormData(prev => ({ ...prev, skills: value }));
+                }}
                 placeholder="JavaScript, React, Node.js, Python, SQL, Git, AWS..."
-                rows="3"
               />
               {errors.skills && <span className="error">{errors.skills.message}</span>}
             </div>
