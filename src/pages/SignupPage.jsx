@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { signUp, signInWithGoogle } from '../firebase/auth';
 import { UserPlus, Mail, Lock, User, AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
@@ -20,6 +20,7 @@ const SignupPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [showVerifyBox, setShowVerifyBox] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,18 +41,24 @@ const SignupPage = () => {
     const { user, error: signUpError, verificationSent } = await signUp(email, password, name);
 
     if (signUpError) {
-      setError(signUpError);
+      let friendlyMessage = signUpError;
+      if (signUpError.includes('auth/email-already-in-use')) {
+        friendlyMessage = 'An account with this email already exists.';
+      }
+      setError(friendlyMessage);
       setLoading(false);
     } else {
       setShowSuccess(true);
+      setShowVerifyBox(true);
       setLoading(false);
       setTimeout(() => {
+        setShowVerifyBox(false);
         import('../firebase/auth').then(({ logOut }) => {
           logOut().then(() => {
             navigate('/login');
           });
         });
-      }, 2000);
+      }, 3000);
     }
   };
 
@@ -75,20 +82,23 @@ const SignupPage = () => {
 
 
   // Block rendering if auth is loading or user is still authenticated (prevents dashboard flash)
-  if (authLoading || currentUser) {
+  if ((authLoading || currentUser) && showVerifyBox) {
     return (
-      <div className="auth-page">
-        <div className="auth-container">
-          <div className="success-overlay">
-            <div className="success-checkmark">
-              <CheckCircle size={60} />
+      <div className="auth-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <div className="auth-container" style={{ maxWidth: 400, width: '100%', margin: '0 auto', padding: 32, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', borderRadius: 16, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="success-overlay" style={{ background: 'none', boxShadow: 'none', position: 'static', padding: 0, width: '100%' }}>
+            <div className="success-checkmark" style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <CheckCircle size={60} color="#22c55e" />
             </div>
-            <p>
-              Account created! Please verify your email to activate your account.<br />
-              <span style={{ fontSize: '0.95em', color: '#666' }}>
-                If you don&apos;t see the email, check your spam or junk folder.
-              </span>
-            </p>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ margin: 0, fontWeight: 600, fontSize: '1.3rem', color: '#222' }}>Account Created!</h2>
+              <p style={{ margin: '16px 0 0 0', fontSize: '1.05rem', color: '#444' }}>
+                Please verify your email to activate your account.<br />
+                <span style={{ fontSize: '0.97em', color: '#666' }}>
+                  If you don&apos;t see the email, check your <b>spam</b> or <b>junk</b> folder.
+                </span>
+              </p>
+            </div>
           </div>
         </div>
       </div>
