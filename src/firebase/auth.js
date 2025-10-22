@@ -5,7 +5,8 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile
+  updateProfile,
+  sendEmailVerification
 } from 'firebase/auth';
 import { auth } from './config';
 
@@ -13,18 +14,18 @@ import { auth } from './config';
 export const signUp = async (email, password, displayName) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    
     // Update profile with display name
     if (displayName) {
       await updateProfile(userCredential.user, {
         displayName: displayName
       });
     }
-    
-    return { user: userCredential.user, error: null };
+    // Send email verification
+    await sendEmailVerification(userCredential.user);
+    return { user: userCredential.user, error: null, verificationSent: true };
   } catch (error) {
     console.error('Sign up error:', error);
-    return { user: null, error: error.message };
+    return { user: null, error: error.message, verificationSent: false };
   }
 };
 

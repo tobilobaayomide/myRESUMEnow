@@ -2,17 +2,15 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { saveResume, updateResume } from '../firebase/firestore';
+import { saveResume } from '../firebase/firestore';
 import { ArrowRight, User, Mail, Phone, MapPin, Briefcase, GraduationCap, Award, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
-import TextEditor from '../components/TextEditor';
 import './FormPage.css';
 
-const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
+const FormPage = ({ onFormSubmit, existingData }) => {
   console.log('🎯 FormPage component is rendering');
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   console.log('FormPage received existingData:', existingData);
-  console.log('Current resumeId:', currentResumeId);
   console.log('Current user:', currentUser);
   
   // Helper function to extract work experience indices from existing data
@@ -118,12 +116,6 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
   const [formProgress, setFormProgress] = useState(0);
   const [autoSaveStatus, setAutoSaveStatus] = useState('');
   const [formData, setFormData] = useState(existingData || {});
-  const [skillsContent, setSkillsContent] = useState(existingData?.skills || '');
-
-  // Register skills field
-  useEffect(() => {
-    register('skills', { required: 'Skills are required' });
-  }, [register]);
 
   // Reset form when existingData changes
   useEffect(() => {
@@ -137,36 +129,18 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
       setAdditionalSections(getAdditionalSectionIndices(existingData));
       setCurrentlyWorking(getInitialCurrentlyWorking(existingData));
       setCurrentlyStudying(getInitialCurrentlyStudying(existingData));
-      setFormData(existingData);
-      setSkillsContent(existingData.skills || '');
-    } else {
-      // If existingData is null, clear the form completely
-      console.log('No existingData - starting with clean slate');
-      reset({});
-      setWorkExperiences([0]);
-      setEducations([0]);
-      setCertifications([]);
-      setAdditionalSections([]);
-      setCurrentlyWorking({});
-      setCurrentlyStudying({});
-      setFormData({});
-      // Clear localStorage when starting fresh
-      localStorage.removeItem('resumeFormData');
     }
   }, [existingData, reset]);
 
-  // Auto-save functionality (#1) - Only for guest users
+  // Auto-save functionality (#1)
   useEffect(() => {
     const saveToLocalStorage = () => {
-      // Only save to localStorage for guest users (not logged in)
-      if (!currentUser) {
-        try {
-          localStorage.setItem('resumeFormData', JSON.stringify(formData));
-          setAutoSaveStatus('Saved locally');
-          setTimeout(() => setAutoSaveStatus(''), 2000);
-        } catch (error) {
-          console.error('Error saving to localStorage:', error);
-        }
+      try {
+        localStorage.setItem('resumeFormData', JSON.stringify(formData));
+        setAutoSaveStatus('Saved');
+        setTimeout(() => setAutoSaveStatus(''), 2000);
+      } catch (error) {
+        console.error('Error saving to localStorage:', error);
       }
     };
 
@@ -177,30 +151,23 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
     }, 1000);
 
     return () => clearTimeout(debounceTimer);
-  }, [formData, currentUser]);
+  }, [formData]);
 
-  // Load saved data on mount - ONLY for guest users with no account
+  // Load saved data on mount
   useEffect(() => {
-    // Only load from localStorage if:
-    // 1. User is NOT logged in (guest mode)
-    // 2. No existing data is being passed (not editing)
-    // 3. No currentResumeId (not editing existing resume)
-    if (!currentUser && !existingData && !currentResumeId) {
-      try {
-        const saved = localStorage.getItem('resumeFormData');
-        if (saved) {
-          console.log('Loading saved guest data from localStorage');
-          const parsedData = JSON.parse(saved);
-          reset(parsedData);
-          setFormData(parsedData);
-          setWorkExperiences(getWorkExperienceIndices(parsedData));
-          setEducations(getEducationIndices(parsedData));
-          setCertifications(getCertificationIndices(parsedData));
-          setAdditionalSections(getAdditionalSectionIndices(parsedData));
-        }
-      } catch (error) {
-        console.error('Error loading from localStorage:', error);
+    try {
+      const saved = localStorage.getItem('resumeFormData');
+      if (saved && !existingData) {
+        const parsedData = JSON.parse(saved);
+        reset(parsedData);
+        setFormData(parsedData);
+        setWorkExperiences(getWorkExperienceIndices(parsedData));
+        setEducations(getEducationIndices(parsedData));
+        setCertifications(getCertificationIndices(parsedData));
+        setAdditionalSections(getAdditionalSectionIndices(parsedData));
       }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
     }
   }, []);
 
@@ -287,18 +254,6 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
     'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara',
     'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau',
     'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
-  ];
-
-  const countries = [
-    'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 
-    'Belgium', 'Brazil', 'Canada', 'Chile', 'China', 'Colombia', 'Czech Republic', 'Denmark', 
-    'Egypt', 'Ethiopia', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'Hungary', 
-    'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Kenya', 
-    'Malaysia', 'Mexico', 'Morocco', 'Netherlands', 'New Zealand', 'Nigeria', 'Norway', 
-    'Pakistan', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Romania', 'Russia', 
-    'Saudi Arabia', 'Singapore', 'South Africa', 'South Korea', 'Spain', 'Sweden', 
-    'Switzerland', 'Tanzania', 'Thailand', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates',
-    'United Kingdom', 'United States', 'Vietnam', 'Zimbabwe'
   ];
 
   const addWorkExperience = () => {
@@ -612,8 +567,7 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
         cleanedData[`degree_${arrayIndex}`] = data[`degree_${eduIndex}`];
         cleanedData[`course_${arrayIndex}`] = data[`course_${eduIndex}`];
         cleanedData[`institution_${arrayIndex}`] = data[`institution_${eduIndex}`];
-        cleanedData[`educationCity_${arrayIndex}`] = data[`educationCity_${eduIndex}`];
-        cleanedData[`educationCountry_${arrayIndex}`] = data[`educationCountry_${eduIndex}`];
+        cleanedData[`educationLocation_${arrayIndex}`] = data[`educationLocation_${eduIndex}`];
         cleanedData[`educationStartMonth_${arrayIndex}`] = data[`educationStartMonth_${eduIndex}`];
         cleanedData[`educationStartYear_${arrayIndex}`] = data[`educationStartYear_${eduIndex}`];
         cleanedData[`educationEndMonth_${arrayIndex}`] = data[`educationEndMonth_${eduIndex}`];
@@ -631,35 +585,23 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
     
     // Add only current additional sections
     additionalSections.forEach((secIndex, arrayIndex) => {
-      console.log(`Processing additional section ${arrayIndex} (original index: ${secIndex})`);
-      console.log(`  Type: ${data[`additionalSectionType_${secIndex}`]}`);
-      console.log(`  Title: ${data[`additionalSectionTitle_${secIndex}`]}`);
-      console.log(`  Content: ${data[`additionalSectionContent_${secIndex}`]}`);
-      
       if (data[`additionalSectionTitle_${secIndex}`] || data[`additionalSectionType_${secIndex}`]) {
         cleanedData[`additionalSectionType_${arrayIndex}`] = data[`additionalSectionType_${secIndex}`];
         cleanedData[`additionalSectionTitle_${arrayIndex}`] = data[`additionalSectionTitle_${secIndex}`];
         cleanedData[`additionalSectionContent_${arrayIndex}`] = data[`additionalSectionContent_${secIndex}`];
-        
-        console.log(`  ✅ Added to cleanedData at index ${arrayIndex}`);
-        
         // Handle project data if it exists
         if (data[`projectName_${secIndex}_0`]) {
           cleanedData[`projectName_${arrayIndex}_0`] = data[`projectName_${secIndex}_0`];
           cleanedData[`projectDescription_${arrayIndex}_0`] = data[`projectDescription_${secIndex}_0`];
           cleanedData[`projectStack_${arrayIndex}_0`] = data[`projectStack_${secIndex}_0`];
           cleanedData[`projectUrl_${arrayIndex}_0`] = data[`projectUrl_${secIndex}_0`];
-          console.log(`  ✅ Added project data`);
         }
         // Handle volunteer data if it exists
         if (data[`volunteerOrg_${secIndex}`]) {
           cleanedData[`volunteerOrg_${arrayIndex}`] = data[`volunteerOrg_${secIndex}`];
           cleanedData[`volunteerYear_${arrayIndex}`] = data[`volunteerYear_${secIndex}`];
           cleanedData[`volunteerDescription_${arrayIndex}`] = data[`volunteerDescription_${secIndex}`];
-          console.log(`  ✅ Added volunteer data`);
         }
-      } else {
-        console.log(`  ⚠️ Skipping - no title or type found`);
       }
     });
     
@@ -671,34 +613,15 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
         ? `${cleanedData.fullName}'s Resume` 
         : 'My Resume';
       
-      // Check if we're updating an existing resume or creating a new one
-      if (currentResumeId) {
-        // Update existing resume
-        console.log('Updating existing resume to account:', currentResumeId);
-        updateResume(currentUser.uid, currentResumeId, cleanedData, resumeName)
-          .then(({ success, error }) => {
-            if (error) {
-              console.error('Error updating resume to Firestore:', error);
-              alert('Failed to update resume to cloud. Your changes will be stored locally.');
-            } else {
-              console.log('✅ Resume updated in Firestore:', currentResumeId);
-            }
-          });
-      } else {
-        // Create new resume
-        console.log('Saving new resume to account');
-        saveResume(currentUser.uid, cleanedData, resumeName)
-          .then(({ success, resumeId, error }) => {
-            if (error) {
-              console.error('Error saving resume to Firestore:', error);
-              alert('Failed to save resume to cloud. Your resume will be stored locally.');
-            } else {
-              console.log('✅ Resume saved to Firestore:', resumeId);
-            }
-          });
-      }
-    } else {
-      console.log('⚠️ User not logged in - resume will NOT be saved to account');
+      saveResume(currentUser.uid, cleanedData, resumeName)
+        .then(({ resume, error }) => {
+          if (error) {
+            console.error('Error saving resume to Firestore:', error);
+            alert('Failed to save resume to cloud. Your resume will be stored locally.');
+          } else {
+            console.log('Resume saved to Firestore:', resume?.id);
+          }
+        });
     }
     
     onFormSubmit(cleanedData);
@@ -714,21 +637,11 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
       
       <div className="form-container">
         <div className="form-header">
-          <button className="back-button" onClick={() => navigate(-1)}>
+          <button className="back-button" onClick={onBack}>
             ← Back
           </button>
           <h1>Tell Us About Yourself</h1>
           <p>Fill in your details to create your professional resume</p>
-          
-          {/* Show info message if user is not logged in */}
-          {!currentUser && (
-            <div className="guest-info-banner">
-              <AlertCircle size={16} />
-              <span>
-                You're creating as a guest. <a href="/signup" style={{ color: '#16a34a', fontWeight: '600' }}>Sign up</a> to save your resume to your account.
-              </span>
-            </div>
-          )}
           
           {/* Progress and Auto-save indicators */}
           <div className="header-indicators">
@@ -836,15 +749,6 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
               </div>
 
               <div className="form-group">
-                <label>GitHub Profile</label>
-                <input
-                  type="url"
-                  {...register('github', )}
-                  placeholder="your GitHub URL"
-                />
-              </div>
-
-              <div className="form-group">
                 <label>Portfolio Website</label>
                 <input
                   type="url"
@@ -900,11 +804,11 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
                   </div>
 
                   <div className="form-group">
-                    <label>Company/Location</label>
+                    <label>Company</label>
                     <input
                       type="text"
                       {...register(`company_${expIndex}`, { required: 'Company is required' })}
-                      placeholder="your company name, location, etc."
+                      placeholder="your company name"
                     />
                     {errors[`company_${expIndex}`] && <span className="error">{errors[`company_${expIndex}`].message}</span>}
                   </div>
@@ -1073,29 +977,19 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
                   </div>
 
                   <div className="form-group">
-                    <label>City</label>
-                    <input
-                      type="text"
-                      {...register(`educationCity_${eduIndex}`, { required: 'City is required' })}
-                      placeholder="e.g. Lagos, London, New York..."
-                    />
-                    {errors[`educationCity_${eduIndex}`] && <span className="error">{errors[`educationCity_${eduIndex}`].message}</span>}
-                  </div>
-
-                  <div className="form-group">
-                    <label>Country</label>
+                    <label>Location</label>
                     <select
-                      {...register(`educationCountry_${eduIndex}`, { required: 'Country is required' })}
+                      {...register(`educationLocation_${eduIndex}`, { required: 'Location is required' })}
                       className="date-select"
                     >
-                      <option value="">Select Country</option>
-                      {countries.map((country) => (
-                        <option key={country} value={country}>
-                          {country}
+                      <option value="">Select State</option>
+                      {nigerianStates.map((state) => (
+                        <option key={state} value={state}>
+                          {state}
                         </option>
                       ))}
                     </select>
-                    {errors[`educationCountry_${eduIndex}`] && <span className="error">{errors[`educationCountry_${eduIndex}`].message}</span>}
+                    {errors[`educationLocation_${eduIndex}`] && <span className="error">{errors[`educationLocation_${eduIndex}`].message}</span>}
                   </div>
 
                   <div className="form-group">
@@ -1211,13 +1105,10 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
             <h2><Award size={20} /> Skills</h2>
             <div className="form-group">
               <label>Technical Skills</label>
-              <TextEditor
-                value={skillsContent}
-                onChange={(content) => {
-                  setSkillsContent(content);
-                  setValue('skills', content, { shouldValidate: true });
-                }}
-                placeholder="Type your skills here... Use the toolbar for bold and bullet lists."
+              <textarea
+                {...register('skills', { required: 'Skills are required' })}
+                placeholder="JavaScript, React, Node.js, Python, SQL, Git, AWS..."
+                rows="3"
               />
               {errors.skills && <span className="error">{errors.skills.message}</span>}
             </div>
@@ -1231,13 +1122,15 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
               <div key={certIndex} className="certification-item">
                 <div className="section-header">
                   <h3>Certification {index + 1}</h3>
-                  <button
-                    type="button"
-                    className="remove-btn"
-                    onClick={() => removeCertification(index)}
-                  >
-                    <X size={16} />
-                  </button>
+                  {certifications.length > 0 && (
+                    <button
+                      type="button"
+                      className="remove-btn"
+                      onClick={() => removeCertification(index)}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
                 </div>
                 
                 <div className="form-grid">
@@ -1375,12 +1268,6 @@ const FormPage = ({ onFormSubmit, existingData, currentResumeId }) => {
                     <span className="error">{errors[`additionalSectionType_${sectionIndex}`].message}</span>
                   )}
                 </div>
-
-                {/* Hidden field for non-custom sections to capture auto-populated title */}
-                <input
-                  type="hidden"
-                  {...register(`additionalSectionTitle_${sectionIndex}`)}
-                />
 
                 {/* Only show custom title input if custom section is selected */}
                 {document.querySelector(`select[name="additionalSectionType_${sectionIndex}"]`)?.value === 'custom' && (

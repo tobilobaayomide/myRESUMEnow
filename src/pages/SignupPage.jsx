@@ -4,8 +4,12 @@ import { signUp, signInWithGoogle } from '../firebase/auth';
 import { UserPlus, Mail, Lock, User, AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import './AuthPages.css';
 
+
+import { useAuth } from '../contexts/AuthContext';
+
 const SignupPage = () => {
   const navigate = useNavigate();
+  const { currentUser, loading: authLoading } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,6 +19,7 @@ const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,17 +37,21 @@ const SignupPage = () => {
 
     setLoading(true);
 
-    const { user, error: signUpError } = await signUp(email, password, name);
+    const { user, error: signUpError, verificationSent } = await signUp(email, password, name);
 
     if (signUpError) {
       setError(signUpError);
       setLoading(false);
     } else {
-      // Show success animation
       setShowSuccess(true);
+      setLoading(false);
       setTimeout(() => {
-        navigate('/login');
-      }, 1000);
+        import('../firebase/auth').then(({ logOut }) => {
+          logOut().then(() => {
+            navigate('/login');
+          });
+        });
+      }, 2000);
     }
   };
 
@@ -64,6 +73,23 @@ const SignupPage = () => {
     }
   };
 
+
+  // Block rendering if auth is loading or user is still authenticated (prevents dashboard flash)
+  if (authLoading || currentUser) {
+    return (
+      <div className="auth-page">
+        <div className="auth-container">
+          <div className="success-overlay">
+            <div className="success-checkmark">
+              <CheckCircle size={60} />
+            </div>
+            <p>Finalizing signup...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="auth-page">
       <div className={`auth-container ${showSuccess ? 'success-animation' : ''}`}>
@@ -72,7 +98,7 @@ const SignupPage = () => {
             <div className="success-checkmark">
               <CheckCircle size={60} />
             </div>
-            <p>Account created successfully!</p>
+            <p>Account created! A verification email has been sent. Please check your email and verify your account. Redirecting to login...</p>
           </div>
         )}
         

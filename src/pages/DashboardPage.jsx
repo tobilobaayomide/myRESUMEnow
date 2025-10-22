@@ -6,7 +6,7 @@ import { parseResumeFile } from '../utils/resumeParser';
 import { FileText, Plus, Edit, Trash2, Copy, Loader, Upload } from 'lucide-react';
 import './DashboardPage.css';
 
-const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResume }) => {
+const DashboardPage = ({ onUploadResume }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [resumes, setResumes] = useState([]);
@@ -18,10 +18,6 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
   useEffect(() => {
     if (currentUser) {
       loadResumes();
-    } else {
-      // Clear resumes when user logs out
-      setResumes([]);
-      setLoading(false);
     }
   }, [currentUser]);
 
@@ -50,13 +46,7 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
       setError('Failed to delete resume');
       console.error('Error deleting resume:', deleteError);
     } else {
-      // Update local state
       setResumes(resumes.filter(r => r.id !== resumeId));
-      
-      // Notify parent component to clear app state if this resume is loaded
-      if (onDeleteResume) {
-        onDeleteResume(resumeId);
-      }
     }
   };
 
@@ -69,29 +59,6 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
     } else {
       setResumes([duplicatedResume, ...resumes]);
     }
-  };
-
-  const handleEdit = async (resumeId) => {
-    const resume = resumes.find(r => r.id === resumeId);
-    if (resume && onEditResume) {
-      onEditResume(resumeId, resume.data);
-      navigate('/form');
-    }
-  };
-
-  const handleView = async (resumeId) => {
-    const resume = resumes.find(r => r.id === resumeId);
-    if (resume && onEditResume) {
-      onEditResume(resumeId, resume.data);
-      navigate('/preview');
-    }
-  };
-
-  const handleCreateNew = () => {
-    if (onCreateNew) {
-      onCreateNew();
-    }
-    navigate('/form');
   };
 
   const handleUploadClick = () => {
@@ -110,10 +77,11 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
       const extractedData = await parseResumeFile(file);
       console.log('Extracted data:', extractedData);
       
-      // Pass the extracted data and navigate
       if (onUploadResume) {
-        onUploadResume(event, navigate);
+        onUploadResume(event);
       }
+      
+      navigate('/form');
     } catch (error) {
       console.error('Error parsing resume:', error);
       setError('Failed to parse resume. Please try a different format or create a new resume.');
@@ -176,7 +144,10 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
             <div className="empty-state-actions">
               <button 
                 className="create-first-button" 
-                onClick={handleCreateNew}
+                onClick={() => {
+                  console.log('Create Resume (empty state) button clicked, navigating to /form');
+                  navigate('/form');
+                }}
               >
                 <Plus size={20} />
                 Create Resume
@@ -189,7 +160,7 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
             <input
               ref={fileInputRef}
               type="file"
-              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept=".pdf,.doc,.docx,.txt"
               onChange={handleFileUpload}
               style={{ display: 'none' }}
             />
@@ -199,20 +170,23 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
             <div className="dashboard-actions">
               <button 
                 className="create-new-button" 
-                onClick={handleCreateNew}
+                onClick={() => {
+                  console.log('Create Resume button clicked, navigating to /form');
+                  navigate('/form');
+                }}
               >
                 <Plus size={20} />
                 Create Resume
               </button>
               <button className="upload-resume-button" onClick={handleUploadClick} disabled={isUploading}>
                 <Upload size={20} />
-                {isUploading ? 'Uploading...' : 'Upload Resume (.docx)'}
+                {isUploading ? 'Uploading...' : 'Upload Resume'}
               </button>
             </div>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept=".pdf,.doc,.docx,.txt"
               onChange={handleFileUpload}
               style={{ display: 'none' }}
             />
@@ -231,7 +205,9 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
                   <div className="resume-card-actions">
                     <button 
                       className="resume-action-btn view-btn"
-                      onClick={() => handleView(resume.id)}
+                      onClick={() => {
+                        console.log('View resume:', resume.id);
+                      }}
                       title="View Resume"
                     >
                       <FileText size={16} />
@@ -239,11 +215,21 @@ const DashboardPage = ({ onUploadResume, onEditResume, onCreateNew, onDeleteResu
                     </button>
                     <button 
                       className="resume-action-btn edit-btn"
-                      onClick={() => handleEdit(resume.id)}
+                      onClick={() => {
+                        console.log('Edit resume:', resume.id);
+                      }}
                       title="Edit Resume"
                     >
                       <Edit size={16} />
                       Edit
+                    </button>
+                    <button 
+                      className="resume-action-btn duplicate-btn"
+                      onClick={() => handleDuplicate(resume.id)}
+                      title="Duplicate Resume"
+                    >
+                      <Copy size={16} />
+                      Copy
                     </button>
                     <button 
                       className="resume-action-btn delete-btn"
