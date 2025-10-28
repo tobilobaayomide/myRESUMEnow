@@ -184,13 +184,16 @@ const DashboardPage = ({ onUploadResume, onLoadResume }) => {
             <h2>No resumes yet</h2>
             <p>Create your first professional resume</p>
             <div className="empty-state-actions">
-              <button 
-                className="create-first-button" 
-                onClick={() => {
-                  console.log('Create Resume (empty state) button clicked, navigating to /form');
-                  navigate('/form');
-                }}
-              >
+                <button 
+                  className="create-first-button" 
+                  onClick={() => {
+                    if (typeof onCreateNewResume === 'function') {
+                      onCreateNewResume();
+                    }
+                    console.log('Create Resume (empty state) button clicked, navigating to /form');
+                    navigate('/form');
+                  }}
+                >
                 <Plus size={20} />
                 Create Resume
               </button>
@@ -213,6 +216,9 @@ const DashboardPage = ({ onUploadResume, onLoadResume }) => {
               <button 
                 className="create-new-button" 
                 onClick={() => {
+                  if (typeof onCreateNewResume === 'function') {
+                    onCreateNewResume();
+                  }
                   console.log('Create Resume button clicked, navigating to /form');
                   navigate('/form');
                 }}

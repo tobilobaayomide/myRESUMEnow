@@ -50,7 +50,7 @@
   line-height: 1.6;
   outline: none;
   color: #1f2937;
-  font-family: inherit;
+  font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', Arial, Helvetica, sans-serif;
   white-space: pre-wrap;
   word-wrap: break-word;
 }
@@ -73,7 +73,9 @@
 
 .text-editor-content i,
 .text-editor-content em,
-.text-editor-content [style*="font-style: italic"] {
+.text-editor-content [style*="font-style: italic"],
+.text-editor-content span[style*="font-style: italic"],
+.text-editor-content *[style*="font-style: italic"] {
   font-style: italic !important;
 }
 

@@ -1,4 +1,20 @@
-/* Paged.js A4 Configuration */
+.job-responsibilities, .job-responsibilities * {
+  font-size: 10pt !important;
+}
+.resume-document *,
+.pagedjs_page_content *,
+.preview-job-description *,
+.summary-text *,
+.skills-content * {
+  font-family: 'Times New Roman', Times, serif !important;
+}
+.preview-job-description * {
+  font-size: 10pt !important;
+}
+.preview-job-description, .preview-job-description * {
+  font-family: 'Times New Roman', Times, serif !important;
+  font-size: 10pt !important;
+}/* Paged.js A4 Configuration */
 @page {
   size: A4;
   margin: 10mm;

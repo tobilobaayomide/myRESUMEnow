@@ -337,7 +337,12 @@ const PreviewPage = ({ resumeData }) => {
                   <h4 style="font-size: 11pt; margin: 0;">${exp.jobTitle}: ${exp.company}</h4>
                   <span style="font-size: 9pt;">${exp.startMonth} ${exp.startYear} - ${exp.endMonth || 'Present'}</span>
                 </div>
-                <div style="margin-left: 1.2rem;">${exp.description || ''}</div>
+                <div class="preview-job-description" style="margin-left: 1.2rem;">${sanitizeJobDescription(exp.description) || ''}</div>
+function sanitizeJobDescription(html) {
+  if (!html) return '';
+  return html.replace(/font-family:[^;"']*;?/gi, '')
+             .replace(/font-size:[^;"']*;?/gi, '');
+}
               </div>
             `).join('')}
           </div>

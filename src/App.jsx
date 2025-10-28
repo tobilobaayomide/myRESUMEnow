@@ -13,6 +13,12 @@ import './App.css'
 
 
 function App() {
+  // Handler to clear resume state and localStorage before creating a new resume
+  const handleCreateNewResume = () => {
+    setResumeData(null);
+    setResumeId(null);
+    localStorage.removeItem('resumeFormData');
+  };
   console.log('🚀 App component rendering');
   const [resumeData, setResumeData] = useState(null);
   const [resumeId, setResumeId] = useState(null);
@@ -75,7 +81,7 @@ function App() {
               <Route path="/preview" element={<PreviewPage key={resumeData?._timestamp} resumeData={resumeData} />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
-              <Route path="/dashboard" element={<DashboardPage onUploadResume={handleUploadResume} onLoadResume={handleLoadResume} />} />
+              <Route path="/dashboard" element={<DashboardPage onUploadResume={handleUploadResume} onLoadResume={handleLoadResume} onCreateNewResume={handleCreateNewResume} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </main>

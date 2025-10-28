@@ -35,11 +35,9 @@ const countryList = [
 ];
 
 const FormPage = ({ onFormSubmit, existingData, resumeId }) => {
-  console.log('🎯 FormPage component is rendering');
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  console.log('FormPage received existingData:', existingData);
-  console.log('Current user:', currentUser);
+
   
   // Helper function to extract work experience indices from existing data
   const getWorkExperienceIndices = (data) => {
@@ -157,59 +155,22 @@ const FormPage = ({ onFormSubmit, existingData, resumeId }) => {
       setAdditionalSections(getAdditionalSectionIndices(existingData));
       setCurrentlyWorking(getInitialCurrentlyWorking(existingData));
       setCurrentlyStudying(getInitialCurrentlyStudying(existingData));
-    }
-  }, [existingData, reset]);
-
-  // Auto-save functionality (#1) - only for signed-in users
-  useEffect(() => {
-    if (!currentUser) return;
-    const saveToLocalStorage = () => {
-      try {
-        localStorage.setItem('resumeFormData', JSON.stringify(formData));
-        setAutoSaveStatus('Saved');
-        setTimeout(() => setAutoSaveStatus(''), 2000);
-      } catch (error) {
-        console.error('Error saving to localStorage:', error);
-      }
-    };
-
-    const debounceTimer = setTimeout(() => {
-      if (Object.keys(formData).length > 0) {
-        saveToLocalStorage();
-      }
-    }, 1000);
-
-    return () => clearTimeout(debounceTimer);
-  }, [formData, currentUser]);
-
-  // Load saved data on mount, but only for signed-in users
-  useEffect(() => {
-    if (!currentUser) {
-      // If not signed in, clear any local saved data
-      localStorage.removeItem('resumeFormData');
+    } else {
+      // If no existingData, always reset to blank form
       reset({});
-      setFormData({});
       setWorkExperiences([0]);
       setEducations([0]);
       setCertifications([]);
       setAdditionalSections([]);
-      return;
+      setCurrentlyWorking({});
+      setCurrentlyStudying({});
+      setFormData({});
     }
-    try {
-      const saved = localStorage.getItem('resumeFormData');
-      if (saved && !existingData) {
-        const parsedData = JSON.parse(saved);
-        reset(parsedData);
-        setFormData(parsedData);
-        setWorkExperiences(getWorkExperienceIndices(parsedData));
-        setEducations(getEducationIndices(parsedData));
-        setCertifications(getCertificationIndices(parsedData));
-        setAdditionalSections(getAdditionalSectionIndices(parsedData));
-      }
-    } catch (error) {
-      console.error('Error loading from localStorage:', error);
-    }
-  }, [currentUser]);
+  }, [existingData, reset]);
+
+  // Auto-save functionality (#1) - only for signed-in users
+
+  // Load saved data on mount, but only for signed-in users
 
   // Calculate form progress (#4)
   useEffect(() => {
@@ -600,6 +561,12 @@ const FormPage = ({ onFormSubmit, existingData, resumeId }) => {
         cleanedData[key] = data[key];
       }
     });
+
+    // Safety: If resumeId is null but the form is pre-filled (has a fullName, title, etc), prevent creating a new resume
+    if (!resumeId && cleanedData.fullName && cleanedData.title && cleanedData.email) {
+      alert('You are editing an existing resume. Please use the dashboard Edit button to update, or clear the form to create a new resume.');
+      return;
+    }
     
     // Add only current work experiences
     workExperiences.forEach((expIndex, arrayIndex) => {
